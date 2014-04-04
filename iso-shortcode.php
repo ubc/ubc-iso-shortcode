@@ -67,7 +67,6 @@ class Educ_Iso_Shortcode {
 		
 		//  Register and Enqueue
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'iso_enqueue'));
-		//add_action( 'wp_footer', array ($this, 'iso_script'));
 
 
 		
@@ -313,8 +312,13 @@ class Educ_Iso_Shortcode {
 		$this->iso_type = 'wp';
 		// de-funkify $query - taken from http://digwp.com/2010/01/custom-query-shortcode/ needed to get it working better ideas ?
 		$query = html_entity_decode( $this->iso_attributes['query'] );
-		$query = preg_replace('~&#x0*([0-9a-f]+);~ei', 'chr(hexdec("\\1"))', $query);
-		$query = preg_replace('~&#0*([0-9]+);~e', 'chr(\\1)', $query);
+		$query = preg_replace_callback('~&#x0*([0-9a-f]+);~i', function ($matches) {
+            return chr(hexdec($matches[0]));
+        }, $query);
+		
+		$query = preg_replace_callback('~&#0*([0-9]+);~i', function ($matches) {
+            return chr($matches[0]);
+        }, $query);
 		
 		if( strpos( $query, 'posts_per_page=' ) === false ):
 			 $query .= "&posts_per_page=".$this->iso_attributes['num'];
@@ -1427,7 +1431,9 @@ class Educ_Iso_Shortcode {
 	 * 
 	 * @access public
 	 * @static
+	 * @return void
 	 */
+//	}
 	static function iso_enqueue() { 
 		global $post;
 		wp_register_style( 'iso-shortcodes',  plugins_url('/css/iso-default.css', __FILE__) );
@@ -1440,10 +1446,10 @@ class Educ_Iso_Shortcode {
 	/**
 	 * iso_script function.
 	 *
+	 * @access public
 	 */
-
 	function iso_script() {
-		global $post;
+		
 		$gutter = $this->iso_attributes['gutter'];
 			
 			if (is_numeric($gutter)): 
@@ -1453,7 +1459,10 @@ class Educ_Iso_Shortcode {
 					echo "<div class=\"alert alert-error\"><strong><i class=\"icon-exclamation\"></i> Gutter</strong> needs to be a numeric value.</div>";
 			
 			endif; 
-			if( isset($post->post_content) AND has_shortcode( $post->post_content, 'iso') ) : ?>            
+		  global $post;
+		  if( isset($post->post_content) AND has_shortcode( $post->post_content, 'iso') ) :
+			
+			?>            
     <script>
      jQuery(document).ready(function($) {
 	  // init Isotope
@@ -1535,7 +1544,6 @@ class Educ_Iso_Shortcode {
 	<?php	
     endif;
 	}
-	
 } /** KEEP **/
 	
 

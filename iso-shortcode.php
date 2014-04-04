@@ -738,35 +738,26 @@ class Educ_Iso_Shortcode {
 		else:
 			switch( $this->iso_attributes['view'] ){
 				
-				default: 
+				default; 
 					$this->custom_modal_output();
 				break;
 					
-				case "simple":
+				case 'simple':
+				case 'simple_modal':
 					$this->simple_modal_output();
 				break;
 				
-				case "simple_modal":
-					$this->simple_modal_output();
-				break;
-				
-				case "block":
+				case 'block':
+				case 'block_modal':
 					$this->block_modal_output();
 				break;
 				
-				case "block_modal":
-					$this->block_modal_output();
-				break;
-				
-				case "custom_modal":
+				case 'custom_modal':
+				case 'custom':
 					$this->custom_modal_output();
 				break;
 				
-				case "custom":
-					$this->custom_modal_output();
-				break;
-				
-				case "list":
+				case 'list':
 					$this->list_output();
 				break;
 				
@@ -832,9 +823,6 @@ class Educ_Iso_Shortcode {
 				$the_iso_header_tag = $the_category_link;
            break;
        }		
-		
-		//$iso_excerpt = the_excerpt();
-		//$trimmed_excerpt = wp_trim_words( $iso_excerpt, 10, '...' );
 	?>
              <!-- Start Modal -->
             <div id="<?php the_ID(); ?>" class="<?php echo $this->iso_attributes['view']; ?> modal fade hide container" tabindex="-1" role="dialog" aria-labelledby="myModalLabel_<?php the_ID(); ?>" aria-hidden="true">

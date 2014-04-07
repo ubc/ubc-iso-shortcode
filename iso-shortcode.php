@@ -130,7 +130,7 @@ class Educ_Iso_Shortcode {
 		$this->add_shortcode( 'odd-even', 'odd_even_shortcode' );
 		$this->add_shortcode( 'get_the_date','get_the_date_shortcode');
 		$this->add_shortcode( 'plain_tags_slug','get_plain_tags_slug_shortcode');
-		$this->add_shortcode( 'get_cat_slug','get_cat_slug_shortcode');
+		$this->add_shortcode( 'plain_cat_slug','get_cat_slug_shortcode');
 	}
 
 	/**
@@ -244,7 +244,7 @@ class Educ_Iso_Shortcode {
 				'box_width' 	=> '260',
 				'filter'		=> false,
 				'filter_by' 	=> "tags",
-				'filter_title' 	=> '',
+				'filter_title' 	=> 'Filter the Board:',
 				'help' 			=> false,
 				"pagination" 	=> false,
 				"num" 			=> 10,
@@ -515,39 +515,51 @@ class Educ_Iso_Shortcode {
 	 * @return void
 	 */
 	function iso_help() {
-		if	($this->iso_attributes['help'] == "true") :
-			?> <div class="alert alert-block iso-help">
-			<h2>Iso Plugin Shortcode<span class="icon-stack"><i class="icon-circle belize-hole icon-stack-base"></i><i class="icon-code clouds"></i></span> Help <small>...because everyone needs a little sometimes.</small></h2>
+		if	($this->iso_attributes['help'] == "true") : ?> 
+		<div class="alert alert-block iso-help">
+			<h2>
+  			Iso Plugin Shortcode Help 
+			<span class="icon-stack">
+	  			<i class="icon-circle icon-stack-base"></i>
+	  			<i class="icon-code" style="color: #FFF"></i>
+	  		</span>
+  			<small>...because everyone needs a little sometimes.</small></h2>
 			<p class="lead">Create a dynamic and interactive way to present posts.</p><hr />
-			<h2>Example</h2>
-			[iso query="posts_per_page=5&tag=tag-1,tag2" container="bus" view="simple_modal" gutter="20"  box_width="265" filter="dropdown" filter_title="The Filter Title" help="false"]
+			<h5><i class="icon-envelope"></i> Support, inquires or feedback please email: <a href="mailto:david.brabbins@ubc.ca" title="support">david.brabbins@ubc.ca</a></h5>
+			<hr />
 		<h3>Breakdown</h3>
-			<p>[iso <strong class="belize-hole">query</strong>="posts_per_page=5&tag=tag-1,tag2" <strong class="carrot">container</strong>="bus" <strong class="amethyst">view</strong>="simple_modal" <strong class="pomegranate">gutter</strong>="20" <strong class="nephritis">box_width</strong>="265" <strong class="orange">filter</strong>="dropdown" <strong class="orange">filter_title</strong>="The Filter Title" <strong class="alizarin">help</strong>="false"]</p>
-			<h3>Options</h3>
+			<p>[iso <strong>query</strong>="posts_per_page=5&tag=tag-1,tag2" <strong>container</strong>="bus" <strong>view</strong>="simple_modal" <strong>gutter</strong>="20" <strong>box_width</strong>="265" <strong>filter</strong>="dropdown" <strong>filter_by</strong>="tags" <strong>filter_title</strong>="The Filter Title" <strong>help</strong>="false"]</p><br />
+			<h4 style="color: #002145">Attributes</h4>
 				<ul>
-					<li><strong class="belize-hole">query</strong>: please go <a href="http://wiki.ubc.ca/Documentation:UBC_Content_Management_System/CLF_Theme/Loop"><strong>here</strong></a> for options on the query.</li>
-					<li><strong class="carrot">container</strong>: sets the container surrounding the posts boxes. (The default is "iso")</li>
-					<li><strong class="amethyst">view</strong>: A preset look and feel controlled by the options listed below (<strong>Please note:</strong> that if no view or a spelling mistake is made then the view will default to custom_modal):
+					<li><strong>query</strong>: please go <a href="http://wiki.ubc.ca/Documentation:UBC_Content_Management_System/CLF_Theme/Loop"><strong>here</strong></a> for options on the query.</li>
+					<li><strong>container</strong>: sets the container surrounding the posts boxes. (The default is "iso")</li>
+					<li><strong>view</strong>: A preset look and feel controlled by the options listed below (<strong>Please note:</strong> that if no view or a spelling mistake is made then the view will default to custom_modal):
 						<ul>
 							<li>simple (default): creates a simple clean look.</li>
-							<li>simple_modal: creates a simple clean look while activing modal box popup to posts.</li>
+							<li>simple_modal: creates a simple clean look while activating modal box pop-up to posts.</li>
 							<li>block: creates a blocky clean look.</li>
-							<li>block_modal: a blocky clean look while activing modal box popup to posts.</li>
-							<li>custom_modal: a view with minor CSS applied plus modal box popup to posts.</li>
+							<li>block_modal: a blocky clean look while activating modal box pop-up to posts.</li>
+							<li>custom_modal: a view with minor CSS applied plus modal box pop-up to posts.</li>
 							<li>custom: a view with minor CSS.</li>
 							<li>list: creates a list of posts that is filterable.</li>
 						</ul>
 					</li>
-					<li><strong class="pomegranate">gutter</strong>: specify the gutter width (this option only accepts numerical values)</li>
-					<li><strong class="nephritis">box_width</strong>: specify the box width (this option only accepts numerical values)</li>
-					<li><strong class="orange">filter</strong>: sets up a list of links or a drop down to sort post on the fly. Currently the list generated by alphabetical order. <strong>Filter uses tags for filtering. Please go <a href="http://en.support.wordpress.com/posts/tags/">HERE</a> for more information on tags.</strong> Options listed below: 
+					<li><strong>gutter</strong>: specify the gutter width (this option only accepts numerical values)</li>
+					<li><strong>box_width</strong>: specify the box width (this option only accepts numerical values)</li>
+					<li><strong>filter</strong>: sets up a list of links or a drop down to sort post on the fly. Currently the list generated order they are type in the query. <strong>Filter uses tags or categories for filtering. </strong> Options listed below: 
 						<ul>
 							<li>links</li>
 							<li>dropdown</li>
 						</ul>
 					</li>
-					<li><strong class="orange">filter_title</strong>: customize the title or text before the filter choice (Leave blank to show nothing).</li>
-					<li><strong class="alizarin">help</strong>: shows the attributes or settings for the shortcode. Either:</li>
+					<li><strong>filter_by</strong>: You can either filter by category or tags. The Filter will use what every category or tags are typed in the query</li>
+						<ul>
+							<li>cat, categories, category</li>
+							<li>tag, tags</li>
+						</ul>
+					</li>
+					<li><strong>filter_title</strong>: customize the title or text before the filter choice (Leave blank to show nothing).</li>
+					<li><strong>help</strong>: shows the attributes or settings for the shortcode on the webpage. (This message appears on the page that the iso shortcode is being setup on. Use preview to to view the help info.) Either:</li>
 						<ul>
 							<li>true</li>
 							or
@@ -558,21 +570,26 @@ class Educ_Iso_Shortcode {
                     <p>New shortcodes have been created so the filter options can be used in a custom setup.</p>
                     <ul>
                         <li><strong>[get_the_date]</strong> : Similar  to [the_date] only this will show the date for each post in the loop; regardless if the post was posted on the same day as the previous post.<br /></li>
-                        <li><strong>[plain_tags_slug]</strong> : Gets the post tags slug (<strong>NOTE</strong>: this tag is importat to use from within the loop. More below.)<br /></li>
-                        <li><strong>[get_the_categories]</strong> : Gets the posts categories as links. <br /></li>
+                        <li><strong>[plain_tags_slug]</strong> : Gets the post tags slug (<strong>NOTE</strong>: this tag is important to use from within the loop. More below.)<br /></li>
+                        <li><strong>[plain_cat_slug]</strong> : Gets the categories slug. <br /></li>
                     </ul>
-                    <br /><h4>How to:</h4>
-                   <p>When customizing the iso query it is important to use <strong>boxey</strong> class and the <strong>[plain_tags_shortcode]</strong> in the container that is housing the post. This will allow the filter option to work.</p>
-                   <p>Most other shortcodes should work inside the loop.</p>
+                    <br /><h4 style="color: #002145">How to:</h4>
+                    <h5>Calling Isotope</h5>
+	                   <p>When customizing the iso shortcode, it is important to use the <strong>boxey</strong> class in the object or box you with to use with isotope (see example below). <strong>I!f boxey is not used, Isotope may not work properly!</strong><br />
+                   	<h5>Custom Filtering</h5>
+	               		In order to filter content in custom view, and depending on which <strong>filter_by</strong> option you choose, either use <strong>[plain_tags_shortcode]</strong> or <strong>[plain_cat_slug]</strong> in the object or box that that needs the filter (see example below).<br /></p>
+	               		<p>The filter will still need to told what to filter by in the shortcode attribute.</p>
+	                   <p><strong>Most other shortcodes that worked in the <strong>loop shortcode</strong> should work here as well.</strong></p>
                    <h5><strong>For Example:</strong></h5>
-                  [iso query="posts_per_page=15&orderby=rand&tag=events,media,news,video-games,alumni" container="iso" gutter="25" view="simple_modal" box_width="260" filter="dropdown" help="true" pagination="false" filter_title="Why not filter something?"]
-<span class="amethyst">&#60;div class="<strong>boxey</strong> <strong class="alizarin">[plain_tags_slug]</strong>"&#62;</span>&#60;h2&#62;&#60a href="[permalink]" title="[the_title]">[the_title]&#60/a&#62; &#60;small&#62;<strong>[get_the_date]</strong>&#60;/small&#62;/h2&#62;
+	                  <p>[iso query="posts_per_page=15&orderby=rand&tag=events,media,news,video-games,alumni" container="iso" gutter="25" view="simple_modal" box_width="260" filter="dropdown" help="true" pagination="false" filter_title="Why not filter something?"]
+<span>&#60;div class="<strong>boxey</strong> <strong>[plain_tags_slug]</strong>"&#62;</span>&#60;h2&#62;&#60a href="[permalink]" title="[the_title]">[the_title]&#60/a&#62; &#60;small&#62;<strong>[get_the_date]</strong>&#60;/small&#62;/h2&#62;
 [the_excerpt]&#60;/div&#62;
-[/iso]
-				<h3 class="pomegranate"><span class="icon-stack">
-                  <i class="icon-circle icon-stack-base"></i>
-                  <i class="icon-exclamation clouds"></i></span> Rules of Engagement:</h3>
-						<p class="pomegranate">This shortcode is meant for only one use per page (<strong>Fun results will ensue if you try more than one!</strong>)</p>
+[/iso]</p><br />
+					<div class="alert alert-error"><h3 style="color: #FFF"><i class="icon-warning-sign"></i> Rules of Engagement:</h3>
+						<p>This shortcode is meant for only one use per page (<strong>Fun results will ensue if you try more than one!</strong>)</p></div>
+
+					<div class="alert alert-info"><h5 class="lead"><i class="icon-envelope"></i> Support, inquires or feedback please email: <a href="mailto:david.brabbins@ubc.ca" title="support">david.brabbins@ubc.ca</a></h5></div>
+
 
 			</div><?php 
 		
@@ -823,6 +840,9 @@ class Educ_Iso_Shortcode {
 				$the_iso_header_tag = $the_category_link;
            break;
        }		
+		
+		//$iso_excerpt = the_excerpt();
+		//$trimmed_excerpt = wp_trim_words( $iso_excerpt, 10, '...' );
 	?>
              <!-- Start Modal -->
             <div id="<?php the_ID(); ?>" class="<?php echo $this->iso_attributes['view']; ?> modal fade hide container" tabindex="-1" role="dialog" aria-labelledby="myModalLabel_<?php the_ID(); ?>" aria-hidden="true">

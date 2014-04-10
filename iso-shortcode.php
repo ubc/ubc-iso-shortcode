@@ -246,6 +246,7 @@ class Educ_Iso_Shortcode {
 				'filter_by' 	=> "tags",
 				'filter_title' 	=> 'Filter the Board:',
 				'searchable' 	=> false,
+				'show_date' 	=> true,
 				'help' 			=> false,
 				"pagination" 	=> false,
 				"num" 			=> 10,
@@ -265,7 +266,10 @@ class Educ_Iso_Shortcode {
 			$this->iso_attributes['time_inclusive'] = false; 
 		
 		if( in_array( $this->iso_attributes['help'], array( 'false','0','null', false ) ) )
-			$this->iso_attributes['help'] = false; 
+			$this->iso_attributes['help'] = false;
+
+		if( in_array( $this->iso_attributes['show_date'], array( 'false','0','null', false ) ) )
+			$this->iso_attributes['show_date'] = false; 
 
 		if( in_array( $this->iso_attributes['searchable'], array( 'false','0','null', false ) ) )
 			$this->iso_attributes['searchable'] = false;
@@ -513,18 +517,23 @@ class Educ_Iso_Shortcode {
 		  </ul>
 		</div>
 	<?php }
-
+	/**
+	 * search_box function.
+	 * search iso attribute true
+	 * @access public
+	 * @return void
+	 */
 	function search_box() { 
 		if	($this->iso_attributes['searchable'] == "true") : ?>
 
 		<section>
 			<form class="form-search iso-form">
-				<input class="search-query iso-text-field" type="text" name="search" id="search" value="" placeholder="Start typing..." autocomplete="off" /> 
+				<input class="search-query iso-text-field" type="text" name="search" id="search" value="" placeholder="Start typing to search..." autocomplete="off" /> 
 				<a class="btn iso-search-button" href="#" id="showAll">Show all</a>
 			</form>
 		</section>
 
-		<p id="noMatches" class="alert alert-info alert-block" style="display:none;"><i class="icon-meh icon-2x"></i> No matches found. Please delete your results or press the "Show All".</p>
+		<p id="noMatches" class="alert alert-info alert-block iso-search-alert" style="display:none;"><i class="icon-meh icon-4x"></i> No matches found. Please delete your results or press the "Show All".</p>
 
 	<?php 
 	endif;
@@ -880,7 +889,7 @@ class Educ_Iso_Shortcode {
                   <?php if ( has_post_thumbnail() ) :?>
                   <div class="span8">
                     <h3 class="post-title"><?php the_title(); ?></h3>
-                    <p class="date"><?php echo get_the_date(); ?></p>
+                    <?php if ($this->iso_attributes['show_date'] == 'true') : ?><p class="date"><?php echo get_the_date(); ?></p><?php endif;?>
                     <div class="modal-body-content">
                         <?php the_content(); ?>
                     </div>
@@ -894,7 +903,7 @@ class Educ_Iso_Shortcode {
                   <?php  else: ?>
                   <div>
                      <h3 class="post-title"><?php the_title(); ?></h3>
-                     <p class="date"><?php echo get_the_date(); ?></p>
+                     <?php if ($this->iso_attributes['show_date'] == 'true') : ?><p class="date"><?php echo get_the_date(); ?></p><?php endif;?>
                     <div class="modal-body-content">
                         <?php the_content(); ?>
                     </div>
@@ -1002,8 +1011,8 @@ class Educ_Iso_Shortcode {
 						elseif ($this->iso_attributes['view'] == "block" ):
 							echo the_permalink();
 						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
-                        <small class="date"><?php echo get_the_date(); ?></small></h3>
-                  		<?php the_excerpt(); ?>
+                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+                  		<span class="iso-description"><?php the_excerpt(); ?></span>
                 		<a href="<?php 
 					   if ($this->iso_attributes['view'] == "block_modal" ):
 							echo '#';
@@ -1133,13 +1142,13 @@ class Educ_Iso_Shortcode {
 						elseif ($this->iso_attributes['view'] == "simple" ):
 							echo the_permalink();
 						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
-                            <small class="date">
+                            <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date">
                                 <?php echo get_the_date(); ?><br />
-                            </small>
+                            </small><?php endif; ?>
                         </h3>
                
                           <div class="excerpt">
-                          <?php the_excerpt(); ?>
+                          <span class="iso-description"><?php the_excerpt(); ?></span>
                           </div>
                         <a href="<?php 
 					   if ($this->iso_attributes['view'] == "simple_modal" ):
@@ -1271,8 +1280,8 @@ class Educ_Iso_Shortcode {
 						elseif ($this->iso_attributes['view'] == "custom" ):
 							echo the_permalink();
 						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
-                        <small class="date"><?php echo get_the_date(); ?></small></h3>
-                  		<?php the_excerpt(); ?>
+                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+                  		<span class="iso-description"><?php the_excerpt(); ?></span>
                 		<a href="<?php 
 					   if ($this->iso_attributes['view'] == "custom_modal" ):
 							echo '#';
@@ -1382,9 +1391,9 @@ class Educ_Iso_Shortcode {
 		}
 		
 		?>
-		<li class="<?php echo $the_iso_filter; ?> iso-list"><h3><small><?php the_tags( ' ',' ' ,' ' ); ?></small><br /><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a><br />
-        <small class="date"><?php echo get_the_date(); ?></small></h3>
-        <?php the_excerpt(); ?>
+		<li id="<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?> iso-list"><h3><small><?php the_tags( ' ',' ' ,' ' ); ?></small><br /><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><span class="iso-title"><?php the_title(); ?></span></a><br />
+        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+        <span class="iso-description"><?php the_excerpt(); ?></span>
         </li>
 		<?php
 	}
@@ -1520,13 +1529,31 @@ class Educ_Iso_Shortcode {
 		});
 
     <?php	if ($this->iso_attributes['searchable'] == 'true'): ?>
+    //Makes the titles searchable
 	$('span.iso-title').each(function(){
 			var tmp = {};
+			<?php if ($this->iso_attributes['view'] == "list"): ?>
+			tmp.id = $(this).parent().parent().parent().attr('id');
+			<?php else: ?>
 			tmp.id = $(this).parent().parent().parent().parent().parent().parent().attr('id');
+			<?php endif; ?>
 			tmp.name = ($(this).text().toLowerCase());
 			items.push( tmp );
 		});
-	//console.log("These are them, the items you see...", items);
+	//Makes the excerpt searchable
+	$('span.iso-description').each(function(){
+			var tmp = {};
+			<?php if ($this->iso_attributes['view'] == "block_modal" || $this->iso_attributes['view'] =="custom_modal" || $this->iso_attributes['view'] == "block" || $this->iso_attributes['view'] =="custom"): ?>
+			tmp.id = $(this).parent().parent().parent().parent().attr('id');
+			<?php elseif ($this->iso_attributes['view'] == "list"): ?>
+			tmp.id = $(this).parent().attr('id');
+			<?php else: ?>
+			tmp.id = $(this).parent().parent().parent().parent().parent().attr('id');
+			<?php endif; ?>
+			tmp.name = ($(this).text().toLowerCase());
+			items.push( tmp );
+		});
+		//console.log("These are them, the items you see...", items);
 
 		// User types in search box - call our search function and supply lower-case keyword as argument
 		$('#search').bind('keyup', function() {
@@ -1600,7 +1627,7 @@ class Educ_Iso_Shortcode {
    	<?php  endif; ?>
   
    <?php	if ($this->iso_attributes['searchable'] == 'true'): ?>
-	
+	//Sets up the search box for iso attribute searchable	
 	function isotopeSearch(kwd) {
 	        // reset results arrays
 	        var matches = [];

@@ -3,7 +3,7 @@
 * Plugin Name: Isotope Shortcode
 * Plugin URI: 
 * Description: Isotope shortcode plugin.
-* Version: 0.9.5
+* Version: 1.0
 * Author: UBC CMS + David Brabbins
 * Author URI:http://cms.ubc.ca
 *
@@ -130,7 +130,7 @@ class Educ_Iso_Shortcode {
 		$this->add_shortcode( 'odd-even', 'odd_even_shortcode' );
 		$this->add_shortcode( 'get_the_date','get_the_date_shortcode');
 		$this->add_shortcode( 'plain_tags_slug','get_plain_tags_slug_shortcode');
-		$this->add_shortcode( 'get_cat_slug','get_cat_slug_shortcode');
+		$this->add_shortcode( 'plain_cat_slug','get_cat_slug_shortcode');
 	}
 
 	/**
@@ -239,12 +239,14 @@ class Educ_Iso_Shortcode {
 				//"rss" 			=> '',
 				'container'		=> 'iso',
 				'iso_object'	=> 'boxey',
-				"view" 			=> 'simple',
+				"view" 			=> 'simple_modal',
 				"gutter"		=> '20',
 				'box_width' 	=> '260',
-				'filter'		=> false,
+				'filter'		=> true,
 				'filter_by' 	=> "tags",
-				'filter_title' 	=> '',
+				'filter_title' 	=> 'Filter the Board:',
+				'searchable' 	=> false,
+				'show_date' 	=> true,
 				'help' 			=> false,
 				"pagination" 	=> false,
 				"num" 			=> 10,
@@ -264,10 +266,16 @@ class Educ_Iso_Shortcode {
 			$this->iso_attributes['time_inclusive'] = false; 
 		
 		if( in_array( $this->iso_attributes['help'], array( 'false','0','null', false ) ) )
-			$this->iso_attributes['help'] = false; 
+			$this->iso_attributes['help'] = false;
+
+		//if( in_array( $this->iso_attributes['show_date'], array( 'false','0','null', false ) ) )
+			//$this->iso_attributes['show_date'] = false; 
+
+		if( in_array( $this->iso_attributes['searchable'], array( 'false','0','null', false ) ) )
+			$this->iso_attributes['searchable'] = false;
 		
-		if( in_array( $this->iso_attributes['filter'], array( 'false','0','null', false ) ) )
-			$this->iso_attributes['filter'] = false; 
+		//if( in_array( $this->iso_attributes['filter'], array( 'false','0','null', false ) ) )
+			//$this->iso_attributes['filter'] = false; 
 		
 		if( empty( $this->iso_attributes['container'] ) ) {
 			$this->iso_attributes['container'] = 'iso';
@@ -371,6 +379,7 @@ class Educ_Iso_Shortcode {
 		$this->iso_script();
 		$this->iso_help();
 		$this-> iso_filter();
+		$this-> search_box();
 		echo '<div class="'. $this->iso_attributes['container'].' '. $this->iso_attributes['view'] .' iso_shortcode" style="display: block; margin: 0 auto;">';
 		if ($this->iso_attributes['view'] == 'list') :
 			echo '<ul>';
@@ -509,45 +518,80 @@ class Educ_Iso_Shortcode {
 		</div>
 	<?php }
 	/**
-	 * iso_filter_dropdowm function.
+	 * search_box function.
+	 * search iso attribute true
+	 * @access public
+	 * @return void
+	 */
+	function search_box() { 
+		if	($this->iso_attributes['searchable'] == "true") : ?>
+
+		<section>
+			<form class="form-search iso-form">
+				<input class="search-query iso-text-field" type="text" name="search" id="search" value="" placeholder="Start typing to search..." autocomplete="off" /> 
+				<a class="btn iso-search-button" href="#" id="showAll">Show all</a>
+			</form>
+		</section>
+
+		<p id="noMatches" class="alert alert-info alert-block iso-search-alert" style="display:none;"><i class="icon-meh icon-4x"></i> No matches found. Please delete your results or press the "Show All".</p>
+
+	<?php 
+	endif;
+	}
+
+
+	/**
+	 * iso_help function.
 	 * Dropdown view for filter
 	 * @access public
 	 * @return void
 	 */
 	function iso_help() {
-		if	($this->iso_attributes['help'] == "true") :
-			?> <div class="alert alert-block iso-help">
-			<h2>Iso Plugin Shortcode<span class="icon-stack"><i class="icon-circle belize-hole icon-stack-base"></i><i class="icon-code clouds"></i></span> Help <small>...because everyone needs a little sometimes.</small></h2>
+		if	($this->iso_attributes['help'] == "true") : ?> 
+		<div class="alert alert-block iso-help">
+			<h2>
+  			Iso Plugin Shortcode Help 
+			<span class="icon-stack">
+	  			<i class="icon-circle icon-stack-base"></i>
+	  			<i class="icon-code" style="color: #FFF"></i>
+	  		</span>
+  			<small>...because everyone needs a little sometimes.</small></h2>
 			<p class="lead">Create a dynamic and interactive way to present posts.</p><hr />
-			<h2>Example</h2>
-			[iso query="posts_per_page=5&tag=tag-1,tag2" container="bus" view="simple_modal" gutter="20"  box_width="265" filter="dropdown" filter_title="The Filter Title" help="false"]
+			<h5><i class="icon-envelope"></i> Support, inquires or feedback please email: <a href="mailto:david.brabbins@ubc.ca" title="support">david.brabbins@ubc.ca</a></h5>
+			<hr />
 		<h3>Breakdown</h3>
-			<p>[iso <strong class="belize-hole">query</strong>="posts_per_page=5&tag=tag-1,tag2" <strong class="carrot">container</strong>="bus" <strong class="amethyst">view</strong>="simple_modal" <strong class="pomegranate">gutter</strong>="20" <strong class="nephritis">box_width</strong>="265" <strong class="orange">filter</strong>="dropdown" <strong class="orange">filter_title</strong>="The Filter Title" <strong class="alizarin">help</strong>="false"]</p>
-			<h3>Options</h3>
+			<p>[iso <strong>query</strong>="posts_per_page=5&tag=tag-1,tag2" <strong>container</strong>="bus" <strong>view</strong>="simple_modal" <strong>gutter</strong>="20" <strong>box_width</strong>="265" <strong>filter</strong>="dropdown" <strong>filter_by</strong>="tags" <strong>filter_title</strong>="The Filter Title" <strong>help</strong>="false"]</p><br />
+			<h4 style="color: #002145">Attributes</h4>
 				<ul>
-					<li><strong class="belize-hole">query</strong>: please go <a href="http://wiki.ubc.ca/Documentation:UBC_Content_Management_System/CLF_Theme/Loop"><strong>here</strong></a> for options on the query.</li>
-					<li><strong class="carrot">container</strong>: sets the container surrounding the posts boxes. (The default is "iso")</li>
-					<li><strong class="amethyst">view</strong>: A preset look and feel controlled by the options listed below (<strong>Please note:</strong> that if no view or a spelling mistake is made then the view will default to custom_modal):
+					<li><strong>query</strong>: please go <a href="http://wiki.ubc.ca/Documentation:UBC_Content_Management_System/CLF_Theme/Loop"><strong>here</strong></a> for options on the query.</li>
+					<li><strong>container</strong>: sets the container surrounding the posts boxes. (The default is "iso")</li>
+					<li><strong>view</strong>: A preset look and feel controlled by the options listed below (<strong>Please note:</strong> that if no view or a spelling mistake is made then the view will default to custom_modal):
 						<ul>
 							<li>simple (default): creates a simple clean look.</li>
-							<li>simple_modal: creates a simple clean look while activing modal box popup to posts.</li>
+							<li>simple_modal: creates a simple clean look while activating modal box pop-up to posts.</li>
 							<li>block: creates a blocky clean look.</li>
-							<li>block_modal: a blocky clean look while activing modal box popup to posts.</li>
-							<li>custom_modal: a view with minor CSS applied plus modal box popup to posts.</li>
+							<li>block_modal: a blocky clean look while activating modal box pop-up to posts.</li>
+							<li>custom_modal: a view with minor CSS applied plus modal box pop-up to posts.</li>
 							<li>custom: a view with minor CSS.</li>
 							<li>list: creates a list of posts that is filterable.</li>
 						</ul>
 					</li>
-					<li><strong class="pomegranate">gutter</strong>: specify the gutter width (this option only accepts numerical values)</li>
-					<li><strong class="nephritis">box_width</strong>: specify the box width (this option only accepts numerical values)</li>
-					<li><strong class="orange">filter</strong>: sets up a list of links or a drop down to sort post on the fly. Currently the list generated by alphabetical order. <strong>Filter uses tags for filtering. Please go <a href="http://en.support.wordpress.com/posts/tags/">HERE</a> for more information on tags.</strong> Options listed below: 
+					<li><strong>gutter</strong>: specify the gutter width (this option only accepts numerical values)</li>
+					<li><strong>box_width</strong>: specify the box width (this option only accepts numerical values)</li>
+					<li><strong>filter</strong>: sets up a list of links or a drop down to sort post on the fly. Currently the list generated order they are type in the query. <strong>Filter uses tags or categories for filtering. </strong> Options listed below: 
 						<ul>
 							<li>links</li>
 							<li>dropdown</li>
 						</ul>
 					</li>
-					<li><strong class="orange">filter_title</strong>: customize the title or text before the filter choice (Leave blank to show nothing).</li>
-					<li><strong class="alizarin">help</strong>: shows the attributes or settings for the shortcode. Either:</li>
+					<li><strong>filter_by</strong>: You can either filter by category or tags. The Filter will use what every category or tags are typed in the query</li>
+						<ul>
+							<li>cat, categories, category</li>
+							<li>tag, tags</li>
+						</ul>
+					</li>
+					<li><strong>filter_title</strong>: customize the title or text before the filter choice (Leave blank to show nothing).</li>
+					<li><strong>help</strong>: shows the attributes or settings for the shortcode on the webpage. (This message appears on the page that the iso shortcode is being setup on. Use preview to to view the help info.) Either:</li>
 						<ul>
 							<li>true</li>
 							or
@@ -558,21 +602,26 @@ class Educ_Iso_Shortcode {
                     <p>New shortcodes have been created so the filter options can be used in a custom setup.</p>
                     <ul>
                         <li><strong>[get_the_date]</strong> : Similar  to [the_date] only this will show the date for each post in the loop; regardless if the post was posted on the same day as the previous post.<br /></li>
-                        <li><strong>[plain_tags_slug]</strong> : Gets the post tags slug (<strong>NOTE</strong>: this tag is importat to use from within the loop. More below.)<br /></li>
-                        <li><strong>[get_the_categories]</strong> : Gets the posts categories as links. <br /></li>
+                        <li><strong>[plain_tags_slug]</strong> : Gets the post tags slug (<strong>NOTE</strong>: this tag is important to use from within the loop. More below.)<br /></li>
+                        <li><strong>[plain_cat_slug]</strong> : Gets the categories slug. <br /></li>
                     </ul>
-                    <br /><h4>How to:</h4>
-                   <p>When customizing the iso query it is important to use <strong>boxey</strong> class and the <strong>[plain_tags_shortcode]</strong> in the container that is housing the post. This will allow the filter option to work.</p>
-                   <p>Most other shortcodes should work inside the loop.</p>
+                    <br /><h4 style="color: #002145">How to:</h4>
+                    <h5>Calling Isotope</h5>
+	                   <p>When customizing the iso shortcode, it is important to use the <strong>boxey</strong> class in the object or box you with to use with isotope (see example below). <strong>I!f boxey is not used, Isotope may not work properly!</strong><br />
+                   	<h5>Custom Filtering</h5>
+	               		In order to filter content in custom view, and depending on which <strong>filter_by</strong> option you choose, either use <strong>[plain_tags_shortcode]</strong> or <strong>[plain_cat_slug]</strong> in the object or box that that needs the filter (see example below).<br /></p>
+	               		<p>The filter will still need to told what to filter by in the shortcode attribute.</p>
+	                   <p><strong>Most other shortcodes that worked in the <strong>loop shortcode</strong> should work here as well.</strong></p>
                    <h5><strong>For Example:</strong></h5>
-                  [iso query="posts_per_page=15&orderby=rand&tag=events,media,news,video-games,alumni" container="iso" gutter="25" view="simple_modal" box_width="260" filter="dropdown" help="true" pagination="false" filter_title="Why not filter something?"]
-<span class="amethyst">&#60;div class="<strong>boxey</strong> <strong class="alizarin">[plain_tags_slug]</strong>"&#62;</span>&#60;h2&#62;&#60a href="[permalink]" title="[the_title]">[the_title]&#60/a&#62; &#60;small&#62;<strong>[get_the_date]</strong>&#60;/small&#62;/h2&#62;
+	                  <p>[iso query="posts_per_page=15&orderby=rand&tag=events,media,news,video-games,alumni" container="iso" gutter="25" view="simple_modal" box_width="260" filter="dropdown" help="true" pagination="false" filter_title="Why not filter something?"]
+<span>&#60;div class="<strong>boxey</strong> <strong>[plain_tags_slug]</strong>"&#62;</span>&#60;h2&#62;&#60a href="[permalink]" title="[the_title]">[the_title]&#60/a&#62; &#60;small&#62;<strong>[get_the_date]</strong>&#60;/small&#62;/h2&#62;
 [the_excerpt]&#60;/div&#62;
-[/iso]
-				<h3 class="pomegranate"><span class="icon-stack">
-                  <i class="icon-circle icon-stack-base"></i>
-                  <i class="icon-exclamation clouds"></i></span> Rules of Engagement:</h3>
-						<p class="pomegranate">This shortcode is meant for only one use per page (<strong>Fun results will ensue if you try more than one!</strong>)</p>
+[/iso]</p><br />
+					<div class="alert alert-error"><h3 style="color: #FFF"><i class="icon-warning-sign"></i> Rules of Engagement:</h3>
+						<p>This shortcode is meant for only one use per page (<strong>Fun results will ensue if you try more than one!</strong>)</p></div>
+
+					<div class="alert alert-info"><h5 class="lead"><i class="icon-envelope"></i> Support, inquires or feedback please email: <a href="mailto:david.brabbins@ubc.ca" title="support">david.brabbins@ubc.ca</a></h5></div>
+
 
 			</div><?php 
 		
@@ -738,35 +787,26 @@ class Educ_Iso_Shortcode {
 		else:
 			switch( $this->iso_attributes['view'] ){
 				
-				default: 
+				default; 
 					$this->custom_modal_output();
 				break;
 					
-				case "simple":
+				case 'simple':
+				case 'simple_modal':
 					$this->simple_modal_output();
 				break;
 				
-				case "simple_modal":
-					$this->simple_modal_output();
-				break;
-				
-				case "block":
+				case 'block':
+				case 'block_modal':
 					$this->block_modal_output();
 				break;
 				
-				case "block_modal":
-					$this->block_modal_output();
-				break;
-				
-				case "custom_modal":
+				case 'custom_modal':
+				case 'custom':
 					$this->custom_modal_output();
 				break;
 				
-				case "custom":
-					$this->custom_modal_output();
-				break;
-				
-				case "list":
+				case 'list':
 					$this->list_output();
 				break;
 				
@@ -849,7 +889,7 @@ class Educ_Iso_Shortcode {
                   <?php if ( has_post_thumbnail() ) :?>
                   <div class="span8">
                     <h3 class="post-title"><?php the_title(); ?></h3>
-                    <p class="date"><?php echo get_the_date(); ?></p>
+                    <?php if ($this->iso_attributes['show_date'] == 'true') : ?><p class="date"><?php echo get_the_date(); ?></p><?php endif;?>
                     <div class="modal-body-content">
                         <?php the_content(); ?>
                     </div>
@@ -863,7 +903,7 @@ class Educ_Iso_Shortcode {
                   <?php  else: ?>
                   <div>
                      <h3 class="post-title"><?php the_title(); ?></h3>
-                     <p class="date"><?php echo get_the_date(); ?></p>
+                     <?php if ($this->iso_attributes['show_date'] == 'true') : ?><p class="date"><?php echo get_the_date(); ?></p><?php endif;?>
                     <div class="modal-body-content">
                         <?php the_content(); ?>
                     </div>
@@ -947,10 +987,11 @@ class Educ_Iso_Shortcode {
 				$the_iso_header_tag = $the_category_link;
            break;
 		}
+		$iso_num = 1;
 	?>
-        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter;?> ">
+        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter;?> match mix">
   			<?php if( function_exists( 'do_atomic' ) ): ?>
-  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
+  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> match mix entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
 				 <small class="header-tags"><?php echo $the_iso_header_tag;?></small>
             		<div class="boxey-inside <?php echo $the_iso_filter; ?>">
 						<?php if ( has_post_thumbnail() ) :?>
@@ -963,15 +1004,15 @@ class Educ_Iso_Shortcode {
 						endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'img-circle')); ?></a>
                        <?php endif; ?>
       				<div class="boxey-inner">
-                		<h3 class="post-title media-title modal-title"> <a href="<?php 
+                		<h3 class="post-title media-title"> <a href="<?php 
 					   if ($this->iso_attributes['view'] == "block_modal" ):
 							echo '#';
 							echo the_ID();
 						elseif ($this->iso_attributes['view'] == "block" ):
 							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php the_title(); ?></a><br />
-                        <small class="date"><?php echo get_the_date(); ?></small></h3>
-                  		<?php the_excerpt(); ?>
+						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
+                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+                  		<span class="iso-description"><?php the_excerpt(); ?></span>
                 		<a href="<?php 
 					   if ($this->iso_attributes['view'] == "block_modal" ):
 							echo '#';
@@ -1100,14 +1141,14 @@ class Educ_Iso_Shortcode {
 							echo the_ID();
 						elseif ($this->iso_attributes['view'] == "simple" ):
 							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php the_title(); ?></a><br />
-                            <small class="date">
+						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
+                            <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date">
                                 <?php echo get_the_date(); ?><br />
-                            </small>
+                            </small><?php endif; ?>
                         </h3>
                
                           <div class="excerpt">
-                          <?php the_excerpt(); ?>
+                          <span class="iso-description"><?php the_excerpt(); ?></span>
                           </div>
                         <a href="<?php 
 					   if ($this->iso_attributes['view'] == "simple_modal" ):
@@ -1238,9 +1279,9 @@ class Educ_Iso_Shortcode {
 							echo the_ID();
 						elseif ($this->iso_attributes['view'] == "custom" ):
 							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php the_title(); ?></a><br />
-                        <small class="date"><?php echo get_the_date(); ?></small></h3>
-                  		<?php the_excerpt(); ?>
+						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
+                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+                  		<span class="iso-description"><?php the_excerpt(); ?></span>
                 		<a href="<?php 
 					   if ($this->iso_attributes['view'] == "custom_modal" ):
 							echo '#';
@@ -1350,9 +1391,9 @@ class Educ_Iso_Shortcode {
 		}
 		
 		?>
-		<li class="<?php echo $the_iso_filter; ?> iso-list"><h3><small><?php the_tags( ' ',' ' ,' ' ); ?></small><br /><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a><br />
-        <small class="date"><?php echo get_the_date(); ?></small></h3>
-        <?php the_excerpt(); ?>
+		<li id="<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?> iso-list"><h3><small><?php the_tags( ' ',' ' ,' ' ); ?></small><br /><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><span class="iso-title"><?php the_title(); ?></span></a><br />
+        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+        <span class="iso-description"><?php the_excerpt(); ?></span>
         </li>
 		<?php
 	}
@@ -1464,26 +1505,73 @@ class Educ_Iso_Shortcode {
 			
 			?>            
     <script>
+    var items = [];
+    var $container = jQuery('.<?php echo $this->iso_attributes['container']; ?>');
      jQuery(document).ready(function($) {
 	  // init Isotope
 	  var $container = $('.<?php echo $this->iso_attributes['container']; ?>');
 	  $container.imagesLoaded(function () {
         $container.isotope({
-			layoutMode: '<?php	if ($this->iso_attributes['view'] == 'list'): ?>fitRows<?php  else: ?>masonry<?php endif; ?>',
+			layoutMode: '<?php if ($this->iso_attributes['view'] == 'list'): ?>fitRows<?php  else: ?>masonry<?php endif; ?>',
 			<?php	if ($this->iso_attributes['view'] == 'list'): ?>
 			itemSelector: '.iso-list',
 			<?php endif; ?>
+			//itemSelector: '.iso_shortcode',
 				getSortData: {
 					name: '.boxeytitle',
 					symbol: '.lead',
 					category: '[data-category]'
 				},
-		masonry: {
-  			isFitWidth: true,
-        	gutter: <?php echo $gutter; ?>
+			masonry: {
+  				isFitWidth: true,
+        		gutter: <?php echo $gutter; ?>
 			}, 
 		});
+
+    <?php	if ($this->iso_attributes['searchable'] == 'true'): ?>
+    //Makes the titles searchable
+	$('span.iso-title').each(function(){
+			var tmp = {};
+			<?php if ($this->iso_attributes['view'] == "list"): ?>
+			tmp.id = $(this).parent().parent().parent().attr('id');
+			<?php else: ?>
+			tmp.id = $(this).parent().parent().parent().parent().parent().parent().attr('id');
+			<?php endif; ?>
+			tmp.name = ($(this).text().toLowerCase());
+			items.push( tmp );
+		});
+	//Makes the excerpt searchable
+	$('span.iso-description').each(function(){
+			var tmp = {};
+			<?php if ($this->iso_attributes['view'] == "block_modal" || $this->iso_attributes['view'] =="custom_modal" || $this->iso_attributes['view'] == "block" || $this->iso_attributes['view'] =="custom"): ?>
+			tmp.id = $(this).parent().parent().parent().parent().attr('id');
+			<?php elseif ($this->iso_attributes['view'] == "list"): ?>
+			tmp.id = $(this).parent().attr('id');
+			<?php else: ?>
+			tmp.id = $(this).parent().parent().parent().parent().parent().attr('id');
+			<?php endif; ?>
+			tmp.name = ($(this).text().toLowerCase());
+			items.push( tmp );
+		});
+		//console.log("These are them, the items you see...", items);
+
+		// User types in search box - call our search function and supply lower-case keyword as argument
+		$('#search').bind('keyup', function() {
+			isotopeSearch( $(this).val().toLowerCase() );
+		});
+		
+		// User clicks 'show all', make call to search function with an empty keyword var
+		$('#showAll').click(function(){
+			$('#search').val(''); // reset input el value
+			isotopeSearch(false); // restores all items
+			return false;	
+		});
+
+	<?php endif; ?>
+
  	});
+
+
 	<?php if ($this->iso_attributes['filter'] ==true): ?>
 		<?php if ($this->iso_attributes['filter'] == 'links'): ?>				
 		$('.iso-links a').click(function(){
@@ -1538,8 +1626,47 @@ class Educ_Iso_Shortcode {
 	   <?php  endif; ?>
    	<?php  endif; ?>
   
-  
+   <?php	if ($this->iso_attributes['searchable'] == 'true'): ?>
+	//Sets up the search box for iso attribute searchable	
+	function isotopeSearch(kwd) {
+	        // reset results arrays
+	        var matches = [];
+	        var misses = [];
+
+	        $('.boxey').removeClass('match miss'); // get rid of any existing classes
+	        $('#noMatches').hide(); // ensure this is always hidden when we start a new query
+
+	        if ( (kwd != '') && (kwd.length >= 2) ) { // min 2 chars to execute query:
+
+	                // loop through items array             
+	                $.each(items, function(i){
+						//console.log('THIS IS THE ITEM NAME : '+items[0].name);
+	                        if ( items[i].name.indexOf(kwd) !== -1 ) { // keyword matches element
+	                                matches.push( $('#'+items[i].id)[0] );
+	                        } else {
+	                                misses.push( $('#'+items[i].id)[0] );
+	                        }
+	                });
+
+	                // add appropriate classes and call isotope.filter
+	                $(matches).addClass('match');
+	                $(misses).addClass('miss');
+	                $container.isotope({ filter: $(matches) }); // isotope.filter will take a jQuery object instead of a class name as an argument - sweet!
+
+	                if (matches.length == 0) {
+	                        $('#noMatches').fadeIn(250); // deal with empty results set
+	                }
+
+	        } else {
+	                // show all if keyword less than 2 chars
+	                $container.isotope({ filter: '' });
+	        }
+
+	}
+    <?php endif; ?>
+
 	});
+
   	</script>
 	<?php	
     endif;

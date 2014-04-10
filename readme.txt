@@ -16,7 +16,7 @@ Create a dynamic and interactive way to present posts.
 
 == Example ==
 
-[iso query=\"posts_per_page=5&tag=tag-1,tag2\" container=\"bus\" view=\"simple_modal\" gutter=\"20\"  box_width=\"265\" filter=\"dropdown\" filter_title=\"The Filter Title\" help=\"false\"]
+[iso query="posts_per_page=5&tag=tag-1,tag2" container="bus" view="simple_modal" gutter="20"  box_width="265" filter="dropdown" filter_title="The Filter Title" searchable=“true” help="false"]
 
 == Breakdown ==
 
@@ -51,6 +51,7 @@ Create a dynamic and interactive way to present posts.
 ** dropdown
 
 * filter_title: customize the title or text before the filter choice (Leave blank to show nothing).
+*  searchable: set to true and search box will appear and allow the user to search the post/pages title or excerpt.
 
 * help: shows the attributes or settings for the shortcode. Either:
 

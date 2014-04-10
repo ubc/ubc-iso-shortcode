@@ -239,10 +239,10 @@ class Educ_Iso_Shortcode {
 				//"rss" 			=> '',
 				'container'		=> 'iso',
 				'iso_object'	=> 'boxey',
-				"view" 			=> 'simple',
+				"view" 			=> 'simple_modal',
 				"gutter"		=> '20',
 				'box_width' 	=> '260',
-				'filter'		=> false,
+				'filter'		=> true,
 				'filter_by' 	=> "tags",
 				'filter_title' 	=> 'Filter the Board:',
 				'searchable' 	=> false,
@@ -268,14 +268,14 @@ class Educ_Iso_Shortcode {
 		if( in_array( $this->iso_attributes['help'], array( 'false','0','null', false ) ) )
 			$this->iso_attributes['help'] = false;
 
-		if( in_array( $this->iso_attributes['show_date'], array( 'false','0','null', false ) ) )
-			$this->iso_attributes['show_date'] = false; 
+		//if( in_array( $this->iso_attributes['show_date'], array( 'false','0','null', false ) ) )
+			//$this->iso_attributes['show_date'] = false; 
 
 		if( in_array( $this->iso_attributes['searchable'], array( 'false','0','null', false ) ) )
 			$this->iso_attributes['searchable'] = false;
 		
-		if( in_array( $this->iso_attributes['filter'], array( 'false','0','null', false ) ) )
-			$this->iso_attributes['filter'] = false; 
+		//if( in_array( $this->iso_attributes['filter'], array( 'false','0','null', false ) ) )
+			//$this->iso_attributes['filter'] = false; 
 		
 		if( empty( $this->iso_attributes['container'] ) ) {
 			$this->iso_attributes['container'] = 'iso';

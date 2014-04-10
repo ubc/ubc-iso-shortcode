@@ -245,6 +245,7 @@ class Educ_Iso_Shortcode {
 				'filter'		=> false,
 				'filter_by' 	=> "tags",
 				'filter_title' 	=> 'Filter the Board:',
+				'searchable' 	=> false,
 				'help' 			=> false,
 				"pagination" 	=> false,
 				"num" 			=> 10,
@@ -265,6 +266,9 @@ class Educ_Iso_Shortcode {
 		
 		if( in_array( $this->iso_attributes['help'], array( 'false','0','null', false ) ) )
 			$this->iso_attributes['help'] = false; 
+
+		if( in_array( $this->iso_attributes['searchable'], array( 'false','0','null', false ) ) )
+			$this->iso_attributes['searchable'] = false;
 		
 		if( in_array( $this->iso_attributes['filter'], array( 'false','0','null', false ) ) )
 			$this->iso_attributes['filter'] = false; 
@@ -371,6 +375,7 @@ class Educ_Iso_Shortcode {
 		$this->iso_script();
 		$this->iso_help();
 		$this-> iso_filter();
+		$this-> search_box();
 		echo '<div class="'. $this->iso_attributes['container'].' '. $this->iso_attributes['view'] .' iso_shortcode" style="display: block; margin: 0 auto;">';
 		if ($this->iso_attributes['view'] == 'list') :
 			echo '<ul>';
@@ -508,8 +513,26 @@ class Educ_Iso_Shortcode {
 		  </ul>
 		</div>
 	<?php }
+
+	function search_box() { 
+		if	($this->iso_attributes['searchable'] == "true") : ?>
+
+		<section>
+			<form class="form-search iso-form">
+				<input class="search-query iso-text-field" type="text" name="search" id="search" value="" placeholder="Start typing..." autocomplete="off" /> 
+				<a class="btn iso-search-button" href="#" id="showAll">Show all</a>
+			</form>
+		</section>
+
+		<p id="noMatches" class="alert alert-info alert-block" style="display:none;"><i class="icon-meh icon-2x"></i> No matches found. Please delete your results or press the "Show All".</p>
+
+	<?php 
+	endif;
+	}
+
+
 	/**
-	 * iso_filter_dropdowm function.
+	 * iso_help function.
 	 * Dropdown view for filter
 	 * @access public
 	 * @return void
@@ -955,10 +978,11 @@ class Educ_Iso_Shortcode {
 				$the_iso_header_tag = $the_category_link;
            break;
 		}
+		$iso_num = 1;
 	?>
-        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter;?> ">
+        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter;?> match mix">
   			<?php if( function_exists( 'do_atomic' ) ): ?>
-  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
+  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> match mix entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
 				 <small class="header-tags"><?php echo $the_iso_header_tag;?></small>
             		<div class="boxey-inside <?php echo $the_iso_filter; ?>">
 						<?php if ( has_post_thumbnail() ) :?>
@@ -971,13 +995,13 @@ class Educ_Iso_Shortcode {
 						endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'img-circle')); ?></a>
                        <?php endif; ?>
       				<div class="boxey-inner">
-                		<h3 class="post-title media-title modal-title"> <a href="<?php 
+                		<h3 class="post-title media-title"> <a href="<?php 
 					   if ($this->iso_attributes['view'] == "block_modal" ):
 							echo '#';
 							echo the_ID();
 						elseif ($this->iso_attributes['view'] == "block" ):
 							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php the_title(); ?></a><br />
+						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
                         <small class="date"><?php echo get_the_date(); ?></small></h3>
                   		<?php the_excerpt(); ?>
                 		<a href="<?php 
@@ -1108,7 +1132,7 @@ class Educ_Iso_Shortcode {
 							echo the_ID();
 						elseif ($this->iso_attributes['view'] == "simple" ):
 							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php the_title(); ?></a><br />
+						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
                             <small class="date">
                                 <?php echo get_the_date(); ?><br />
                             </small>
@@ -1246,7 +1270,7 @@ class Educ_Iso_Shortcode {
 							echo the_ID();
 						elseif ($this->iso_attributes['view'] == "custom" ):
 							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php the_title(); ?></a><br />
+						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
                         <small class="date"><?php echo get_the_date(); ?></small></h3>
                   		<?php the_excerpt(); ?>
                 		<a href="<?php 
@@ -1472,26 +1496,55 @@ class Educ_Iso_Shortcode {
 			
 			?>            
     <script>
+    var items = [];
+    var $container = jQuery('.<?php echo $this->iso_attributes['container']; ?>');
      jQuery(document).ready(function($) {
 	  // init Isotope
 	  var $container = $('.<?php echo $this->iso_attributes['container']; ?>');
 	  $container.imagesLoaded(function () {
         $container.isotope({
-			layoutMode: '<?php	if ($this->iso_attributes['view'] == 'list'): ?>fitRows<?php  else: ?>masonry<?php endif; ?>',
+			layoutMode: '<?php if ($this->iso_attributes['view'] == 'list'): ?>fitRows<?php  else: ?>masonry<?php endif; ?>',
 			<?php	if ($this->iso_attributes['view'] == 'list'): ?>
 			itemSelector: '.iso-list',
 			<?php endif; ?>
+			//itemSelector: '.iso_shortcode',
 				getSortData: {
 					name: '.boxeytitle',
 					symbol: '.lead',
 					category: '[data-category]'
 				},
-		masonry: {
-  			isFitWidth: true,
-        	gutter: <?php echo $gutter; ?>
+			masonry: {
+  				isFitWidth: true,
+        		gutter: <?php echo $gutter; ?>
 			}, 
 		});
+
+    <?php	if ($this->iso_attributes['searchable'] == 'true'): ?>
+	$('span.iso-title').each(function(){
+			var tmp = {};
+			tmp.id = $(this).parent().parent().parent().parent().parent().parent().attr('id');
+			tmp.name = ($(this).text().toLowerCase());
+			items.push( tmp );
+		});
+	//console.log("These are them, the items you see...", items);
+
+		// User types in search box - call our search function and supply lower-case keyword as argument
+		$('#search').bind('keyup', function() {
+			isotopeSearch( $(this).val().toLowerCase() );
+		});
+		
+		// User clicks 'show all', make call to search function with an empty keyword var
+		$('#showAll').click(function(){
+			$('#search').val(''); // reset input el value
+			isotopeSearch(false); // restores all items
+			return false;	
+		});
+
+	<?php endif; ?>
+
  	});
+
+
 	<?php if ($this->iso_attributes['filter'] ==true): ?>
 		<?php if ($this->iso_attributes['filter'] == 'links'): ?>				
 		$('.iso-links a').click(function(){
@@ -1546,8 +1599,47 @@ class Educ_Iso_Shortcode {
 	   <?php  endif; ?>
    	<?php  endif; ?>
   
-  
+   <?php	if ($this->iso_attributes['searchable'] == 'true'): ?>
+	
+	function isotopeSearch(kwd) {
+	        // reset results arrays
+	        var matches = [];
+	        var misses = [];
+
+	        $('.boxey').removeClass('match miss'); // get rid of any existing classes
+	        $('#noMatches').hide(); // ensure this is always hidden when we start a new query
+
+	        if ( (kwd != '') && (kwd.length >= 2) ) { // min 2 chars to execute query:
+
+	                // loop through items array             
+	                $.each(items, function(i){
+						//console.log('THIS IS THE ITEM NAME : '+items[0].name);
+	                        if ( items[i].name.indexOf(kwd) !== -1 ) { // keyword matches element
+	                                matches.push( $('#'+items[i].id)[0] );
+	                        } else {
+	                                misses.push( $('#'+items[i].id)[0] );
+	                        }
+	                });
+
+	                // add appropriate classes and call isotope.filter
+	                $(matches).addClass('match');
+	                $(misses).addClass('miss');
+	                $container.isotope({ filter: $(matches) }); // isotope.filter will take a jQuery object instead of a class name as an argument - sweet!
+
+	                if (matches.length == 0) {
+	                        $('#noMatches').fadeIn(250); // deal with empty results set
+	                }
+
+	        } else {
+	                // show all if keyword less than 2 chars
+	                $container.isotope({ filter: '' });
+	        }
+
+	}
+    <?php endif; ?>
+
 	});
+
   	</script>
 	<?php	
     endif;

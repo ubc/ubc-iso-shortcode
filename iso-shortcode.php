@@ -3,7 +3,7 @@
 * Plugin Name: Isotope Shortcode
 * Plugin URI: 
 * Description: Isotope shortcode plugin.
-* Version: 0.9.5
+* Version: 1.0
 * Author: UBC CMS + David Brabbins
 * Author URI:http://cms.ubc.ca
 *

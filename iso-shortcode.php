@@ -28,7 +28,6 @@
 ?>
 <?php 
 class Educ_Iso_Shortcode {
-	static $iso_support;
 	public $iso_type = null;
 	public $odd_or_even = 0;
 	public $content = '';
@@ -64,12 +63,12 @@ class Educ_Iso_Shortcode {
 
 		add_filter( 'the_author_posts_link' , array( &$this,'feed_post_author_link' ) , 10 , 5);
 		add_filter( 'author_link' , array( &$this,'feed_post_author_link' ) , 10 , 5);
+
+			//add_action('parse_query', 'overwrite_category_name');
+
 		
 		//  Register and Enqueue
 		add_action( 'wp_enqueue_scripts', array(__CLASS__, 'iso_enqueue'));
-
-
-		
 
 		//  There is no point trying to get links to categories or tags from feed since you can't get one reliably. =(
 
@@ -131,6 +130,7 @@ class Educ_Iso_Shortcode {
 		$this->add_shortcode( 'get_the_date','get_the_date_shortcode');
 		$this->add_shortcode( 'plain_tags_slug','get_plain_tags_slug_shortcode');
 		$this->add_shortcode( 'plain_cat_slug','get_cat_slug_shortcode');
+		$this->add_shortcode( 'plain_term_slug', 'get_plain_terms_slug_shortcode');
 	}
 
 	/**
@@ -193,6 +193,31 @@ class Educ_Iso_Shortcode {
 		
 	}
 	/**
+	 * get_plain_terms_slug_shortcode function.
+	 * Gets post tags id
+	 * @access public
+	 * @return void
+	 */
+	function get_plain_terms_slug_shortcode() {
+
+	  $post = get_post( $post->ID );
+	  $post_type = $post->post_type;
+	  $taxonomies = get_object_taxonomies( $post_type, 'objects' );
+
+	  $outterm = "";
+	  foreach ( $taxonomies as $taxonomy_slug => $taxonomy ){
+
+	    $terms = get_the_terms( $post->ID, $taxonomy_slug );
+	    if ( !empty( $terms ) ) :
+	      foreach ( $terms as $term ) {
+	        $outterm .= $term->slug.' ';
+	      }
+	      endif;
+	  }
+	  return $outterm;
+	}
+
+	/**
 	 * get_category_name_shortcode function.
 	 * 
 	 * @access public
@@ -245,6 +270,7 @@ class Educ_Iso_Shortcode {
 				'filter'		=> true,
 				'filter_by' 	=> "tags",
 				'filter_title' 	=> 'Filter the Board:',
+				'category' 		=> '',
 				'searchable' 	=> false,
 				'show_date' 	=> true,
 				'help' 			=> false,
@@ -331,10 +357,18 @@ class Educ_Iso_Shortcode {
 		if( strpos( $query, 'posts_per_page=' ) === false ):
 			 $query .= "&posts_per_page=".$this->iso_attributes['num'];
 		endif;
+		if( strpos( $query, 'category_name=' ) === false ):
+			 $query .= "&category_name=".$this->iso_attributes['category'];
+		endif;
 		if( $this->iso_attributes['pagination'] ):
 			$query .= "&paged=".get_query_var( 'paged' );
-		endif;		
-		
+		endif;
+
+		//global $wp_query;
+		//var_dump($wp_query->query_vars);
+				//$categories_iso = ( explode( ',', $this->iso_query->get( 'category' ) ) );
+		//$args = array_merge( $this->iso_query->query_vars, array( 'category_name' => 'product' ) );
+
 		if( $this->iso_attributes['author'] ):
 			
 			switch( $this->iso_attributes['author'] ) {
@@ -374,11 +408,12 @@ class Educ_Iso_Shortcode {
 		$this->iso_query = new WP_Query( $query_array );
 		
 		$this->total_pages = $this->iso_query->max_num_pages;
-		
 		if ( $this->iso_query->have_posts() ) :
+			//global $wp_query;
+			//var_dump($this->iso_query->query);	
 		$this->iso_script();
 		$this->iso_help();
-		$this-> iso_filter();
+		$this->iso_filter();
 		$this-> search_box();
 		echo '<div class="'. $this->iso_attributes['container'].' '. $this->iso_attributes['view'] .' iso_shortcode" style="display: block; margin: 0 auto;">';
 		if ($this->iso_attributes['view'] == 'list') :
@@ -416,34 +451,39 @@ class Educ_Iso_Shortcode {
 
 	}
 	/**
-	 * iso_filter function.
-	 *
-	 * @access public
-	 * @return void
-	 */
-	function iso_filter(){
-			switch( $this->iso_attributes['filter'] ){
+	* overwrite_category_name function
+	**/
 
-				default:
-				break;
+	function iso_filter() {
 
-				case "links":
-					$this->iso_filter_links();
-				break;
-				
-				case "dropdown":
-					$this->iso_filter_dropdown();
-				break;
-			}
-	}
-	/**
-	 * iso_filter_links function.
-	 * Links view for filter
-	 * @access public
-	 * @return void
-	 */
-	function iso_filter_links() { ?>
-    
+		$iso_taxonomy = $this->iso_query->get( 'taxonomy' );
+
+		switch ( $this->iso_attributes['filter_by'] ){
+			default: "tags";
+			break;
+					
+			case "tags":
+			case "tag":
+					 $get_arr_tags = ( explode( ',', $this->iso_query->get( 'tag' ) ) );
+			break;
+					
+			case "category":
+			case "categories":
+			case "cat":
+					 $get_arr_tags = ( explode( ',', $this->iso_query->query[ 'category_name' ] ) );
+			break;
+
+            case "custom_post":
+                 $get_arr_tags = ( explode( ',', $this->iso_query->get( $iso_taxonomy ) ) );
+            break;
+
+		}
+		switch ( $this->iso_attributes['filter'] ){
+			default: "links";
+			break;
+
+			case "links":
+			 ?>
 			<div class="navbar">
 			<div class="iso-nav">
 			<a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse-iso">
@@ -455,68 +495,39 @@ class Educ_Iso_Shortcode {
 				<div class="services-menu expand nav-collapse collapse nav-collapse-iso">
 					<div id="menu-top-service-menu" class="iso-links">
 						<a href="#" data-filter-value="*" class="current"><i class="icon-th"></i>&nbsp; All</a>
-							<?php switch ( $this->iso_attributes['filter_by'] ){
-                                default: "tags";
-                                break;
-                                        
-                                case "tags":
-                                case "tag":
-                                         $get_arr_tags = ( explode( ',', $this->iso_query->get( 'tag' ) ) );
-                                break;
-                                        
-                                case "category":
-                                case "categories":
-								case "cat":
-                                         $get_arr_tags = ( explode( ',', $this->iso_query->get( 'category' ) ) );
-                                break;
-                            }
-                                            
-                       foreach ($get_arr_tags as $var) {
-                           $var_rep = str_replace('-', ' ', $var);
-                           $var_rep = ucwords(strtolower($var_rep));
-			echo '			<a href="#" data-filter-value=".'. $var .'">'. $var_rep .'</a>';
-			   } ?>
+						<?php 
+							foreach ($get_arr_tags as $var) {
+                       			$var_rep = str_replace('-', ' ', $var);
+                      		 	$var_rep = ucwords(strtolower($var_rep));
+							echo '			<a href="#" data-filter-value=".'. $var .'">'. $var_rep .'</a>';
+		   				} ?>
 					</div>
 				</div>	
 			</div>
 			</div>
-	<?php } 
-	/**
-	 * iso_filter_dropdowm function.
-	 * Dropdown view for filter
-	 * @access public
-	 * @return void
-	 */
-	function iso_filter_dropdown() { ?>
-		<div class="btn-group iso-dropdown">
-		  <button class="btn btn-large"><a class="filter-title" data-filter-value="*"><?php echo  $this->iso_attributes['filter_title'] ?></a></button>
-		  <button class="btn btn-large dropdown-toggle" data-toggle="dropdown">
-			<i class="icon-caret-down"></i>
-		  </button>
-		  <ul class="dropdown-menu iso-links">
-				<?php switch ( $this->iso_attributes['filter_by'] ){
-					default: "tags";
-					break;
-							
-					case "tags":
-					case "tag":
-							 $get_arr_tags = ( explode( ',', $this->iso_query->get( 'tag' ) ) );
-					break;
-							
-					case "category":
-					case "categories":
-					case "cat":
-							 $get_arr_tags = ( explode( ',', $this->iso_query->get( 'category' ) ) );
-					break;
-				}
-								
-			   foreach ($get_arr_tags as $var) {
-				   $var_rep = str_replace('-', ' ', $var);
-					echo '	<li><a class="'. $var .'" data-filter-value=".'. $var .'">'. $var_rep .'</a></li>';
-				} ?>
-		  </ul>
-		</div>
-	<?php }
+		<?php ;
+		break;
+
+		case "dropdown": ?>
+			<div class="btn-group iso-dropdown">
+					  <button class="btn btn-large"><a class="filter-title" data-filter-value="*"><?php echo  $this->iso_attributes['filter_title'] ?></a></button>
+					  <button class="btn btn-large dropdown-toggle" data-toggle="dropdown">
+						<i class="icon-caret-down"></i>
+					  </button>
+					  <ul class="dropdown-menu iso-links">
+							<?php 
+
+											
+						   foreach ($get_arr_tags as $var) {
+							   $var_rep = str_replace('-', ' ', $var);
+								echo '	<li><a class="'. $var .'" data-filter-value=".'. $var .'">'. $var_rep .'</a></li>';
+							} ?>
+					  </ul>
+			</div>
+
+		<?php break;
+		}
+	}
 	/**
 	 * search_box function.
 	 * search iso attribute true
@@ -597,26 +608,84 @@ class Educ_Iso_Shortcode {
 							or
 							<li>false</li>
 						</ul>
+					<li><strong>searchable</strong>: Use a search box to search the post title and the exceprt</li>
+						<ul>
+							<li>true</li>
+							or
+							<li>false</li>
+						</ul>					
 				</ul>
                     <h3>Customizing</h3>
+                    <h3>Out of the box</h3>
+                    <pre>[iso query="posts_per_page=15&orderby=rand&tag=events,media,news,video-games,alumni"]</pre>
+                    <h3>Adding sorting by category_name or tag</h3>
+                    <pre>[iso query="posts_per_page=15&orderby=rand&category_name=events,media,news,video-games,alumni" filter_by="cat"]</pre>
+                    <pre>[iso query="posts_per_page=15&orderby=rand&tag=events,media,news,video-games,alumni"]</pre>
+                    <h3>Further Customization</h3>
+                    <p>The View attribute should be set to view=custom or view=custom-modal</p>
                     <p>New shortcodes have been created so the filter options can be used in a custom setup.</p>
                     <ul>
-                        <li><strong>[get_the_date]</strong> : Similar  to [the_date] only this will show the date for each post in the loop; regardless if the post was posted on the same day as the previous post.<br /></li>
-                        <li><strong>[plain_tags_slug]</strong> : Gets the post tags slug (<strong>NOTE</strong>: this tag is important to use from within the loop. More below.)<br /></li>
-                        <li><strong>[plain_cat_slug]</strong> : Gets the categories slug. <br /></li>
-                    </ul>
-                    <br /><h4 style="color: #002145">How to:</h4>
-                    <h5>Calling Isotope</h5>
+                        <li><strong>[get_the_date]</strong> : Similar  to [the_date] only this will show the date for each post in the loop; regardless if the post was posted on the same day as the previous post.</li>
+                        <li><strong>[plain_tags_slug]</strong> : Gets the post tags slug (<strong>NOTE</strong>: this tag is important to use from within the loop. More below.)</li>
+                        <li><strong>[plain_cat_slug]</strong> : Gets the categories slug.</li>
+                        <li><strong>[plain_term_slug]</strong> :  Gets the terms slug (Custom post type categories).</li>
+                    </ul>                   
+                    <p class="lead">This Feature Requires WPAUTOP-control Plugin to be activated. More on the plugin <a href="http://wordpress.org/plugins/wpautop-control/faq/">here</a>.</p>
 	                   <p>When customizing the iso shortcode, it is important to use the <strong>boxey</strong> class in the object or box you with to use with isotope (see example below). <strong>I!f boxey is not used, Isotope may not work properly!</strong><br />
                    	<h5>Custom Filtering</h5>
-	               		In order to filter content in custom view, and depending on which <strong>filter_by</strong> option you choose, either use <strong>[plain_tags_shortcode]</strong> or <strong>[plain_cat_slug]</strong> in the object or box that that needs the filter (see example below).<br /></p>
+	               		In order to filter content in custom view, and depending on which <strong>filter_by</strong> option you choose, either use <strong>[plain_tags_shortcode]</strong>, <strong>[plain_cat_slug]</strong> or <strong>[plain_term_slug]</strong> in the object or box that that is being filter (see example below).<br /></p>
 	               		<p>The filter will still need to told what to filter by in the shortcode attribute.</p>
 	                   <p><strong>Most other shortcodes that worked in the <strong>loop shortcode</strong> should work here as well.</strong></p>
-                   <h5><strong>For Example:</strong></h5>
-	                  <p>[iso query="posts_per_page=15&orderby=rand&tag=events,media,news,video-games,alumni" container="iso" gutter="25" view="simple_modal" box_width="260" filter="dropdown" help="true" pagination="false" filter_title="Why not filter something?"]
-<span>&#60;div class="<strong>boxey</strong> <strong>[plain_tags_slug]</strong>"&#62;</span>&#60;h2&#62;&#60a href="[permalink]" title="[the_title]">[the_title]&#60/a&#62; &#60;small&#62;<strong>[get_the_date]</strong>&#60;/small&#62;/h2&#62;
-[the_excerpt]&#60;/div&#62;
-[/iso]</p><br />
+                   <h5>Calling Isotope <em>without search</em></h5>
+                   <span style="color: red;">Red shows what is important to incude for filtering purposes</span>
+	                 <pre>[iso query=&quot;posts_per_page=15&amp;orderby=rand&amp;tag=events,media,news,video-games,alumni&quot; container=&quot;iso&quot; gutter=&quot;25&quot; view=&quot;simple_modal&quot; box_width=&quot;260&quot; filter=&quot;dropdown&quot; help=&quot;true&quot; pagination=&quot;false&quot; filter_title=&quot;Why not filter something?&quot;]
+	&lt;div class=&quot;<span style="color: red;">boxey [plain_tags_slug]</span>&quot;&gt;&lt;h2&gt;&lt;a href=&quot;[permalink]&quot; title=&quot;[the_title]&quot;&gt;[the_title]&lt;/a&gt; &lt;small&gt;[get_the_date]&lt;/small&gt;&lt;/h2&gt;	
+[the_excerpt]&lt;/div&gt;
+[/iso]</pre>
+	                 <br />
+				<h5>Calling Isotope <em>with</em> search, custom post type using Peoples Profile Plugin, and custom modal</h5>
+				<p><span style="color: red;">Red</span> indicates importantance for filtering. For the search to work, you will need to match the parent structure and class naming convention.</br />
+					<strong>.iso-title</strong> and <strong>.iso-description</strong> will need to be present and follow the same parent and child relationship.</strong>
+				<pre>[iso query=&quot;<span style="color: red;">post_type=profile_cct&amp;profile_cct_role=faculty,staff,researcher</span>&quot; pagination=&quot;false&quot; searchable=&quot;true&quot; <span style="color: red;">filter_by=&quot;custom_post&quot;</span> filter=&quot;links&quot; box_width=&quot;250&quot;  gutter=&quot;30&quot; view=&quot;custom_modal&quot; help=&quot;true&quot;]
+&lt;div id=&quot;post-[the_ID]&quot; class=&quot;[plain_term_slug]&quot;&gt;
+&lt;div class=&quot;<span style="color: red;">boxey [odd-even] [plain_term_slug]</span> profile&quot;&gt;
+&lt;div class=&quot;boxey-inside&quot;&gt;
+&lt;a href=&quot;#[the_ID]&quot; role=&quot;button&quot; data-toggle=&quot;modal&quot;&gt;[the_post_thumbnail size=full]&lt;/a&gt;
+&lt;div class=&quot;boxey-inner&quot;&gt;
+&lt;h3&gt;&lt;a href=&quot;#[the_ID]&quot; role=&quot;button&quot; data-toggle=&quot;modal&quot;&gt;<span style="color: red;">&lt;div class=&quot;iso-title&quot;&gt;[profilefield type=name show=&quot;salutations, middle&quot; html=false]
+&lt;small&gt;[profilefield type=position html=false]&lt;/small&gt;&lt;/div&gt;</span>&lt;/a&gt;&lt;/h3&gt;<span style="color: red;">&lt;div class=&quot;iso-description hidden&quot;&gt;[profilefield type=bio html=false]&lt;/div&gt;</span>
+&lt;i class=&quot;icon-envelope&quot;&gt;&lt;/i&gt; &lt;a href=&quot;mailto:[profilefield type=email html=false]&quot; title=&quot;[profilefield type=name show=&quot;salutations, middle&quot;, html=false]&quot;&gt;[profilefield type=email html=false]&lt;/a&gt;
+&lt;i class=&quot;icon-phone-sign&quot;&gt;&lt;/i&gt; [profilefield type=phone show=&quot;tel-1,tel-2,tel-3&quot; html=false]
+&lt;a href=&quot;#[the_ID]&quot; role=&quot;button&quot; class=&quot;btn btn-small launch-btn&quot; data-toggle=&quot;modal&quot;&gt;Launch&lt;/a&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&quot;[the_ID]&quot; class=&quot;modal fade hide container&quot; tabindex=&quot;-1&quot; role=&quot;dialog&quot; aria-labelledby=&quot;myModalLabel_[the_ID]&quot; aria-hidden=&quot;true&quot;&gt;
+  &lt;div class=&quot;&quot;&gt;
+    &lt;div class=&quot;modal-header&quot;&gt;
+      &lt;button type=&quot;button&quot; class=&quot;close&quot; data-dismiss=&quot;modal&quot; aria-hidden=&quot;true&quot;&gt;&times;&lt;/button&gt;
+      &lt;h3 id=&quot;myModalLabel_[the_ID]&quot; class=&quot;modal-label header-tags&quot;&gt;[profilefield type=profile_cct_role]&lt;/h3&gt;
+    &lt;/div&gt;
+    &lt;!-- end #modal-header --&gt;
+    &lt;div class=&quot;modal-body&quot;&gt;
+      &lt;div class=&quot;row-fluid&quot;&gt;
+        &lt;div class=&quot;modal-body-content&quot;&gt;
+          [the_content]
+        &lt;/div&gt;
+      &lt;/div&gt;
+      &lt;!-- end .row-fluid --&gt; 
+    &lt;/div&gt;
+    &lt;!-- end .modal-body --&gt;
+    &lt;div class=&quot;modal-footer&quot;&gt;
+      &lt;div class=&quot;nav-previous alignleft&quot;&gt;Read Next: &lt;a href=&quot;#&lt;?php echo $adjacent_post-&gt;ID; ?&gt;&quot; title=&quot;Read &lt;?php echo $adjacent_post-&gt;post_title; ?&gt;&quot; role=&quot;button&quot; data-toggle=&quot;modal&quot;&gt;&lt;strong&gt;&lt;?php echo $adjacent_post-&gt;post_title; ?&gt;&lt;/strong&gt; &lt;i class=&quot;icon-chevron-sign-right belize-hole&quot;&gt;&lt;/i&gt;&lt;/a&gt;&lt;/div&gt;
+      &lt;a href=&quot;&lt;?php the_permalink(); ?&gt;&quot; title=&quot;&lt;?php the_title(); ?&gt;&quot;&gt;open full page &lt;i class=&quot;icon-share-alt belize-hole&quot;&gt;&lt;/i&gt;&lt;/a&gt;
+      &lt;button type=&quot;button&quot; class=&quot;close&quot; data-dismiss=&quot;modal&quot; aria-hidden=&quot;true&quot;&gt;&times;&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;!-- End modal-footer --&gt; 
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+[/iso]</pre>
 					<div class="alert alert-error"><h3 style="color: #FFF"><i class="icon-warning-sign"></i> Rules of Engagement:</h3>
 						<p>This shortcode is meant for only one use per page (<strong>Fun results will ensue if you try more than one!</strong>)</p></div>
 
@@ -629,84 +698,6 @@ class Educ_Iso_Shortcode {
 		
 	endif;
 	}
-	/**
-	 * rss_iso function.
-	 *
-	 * @access public
-	 * @return void
-	 */
-//	function rss_iso(){
-//		$this->iso_type = 'rss';
-//
-//		$rss_mock_query = new WP_Query('cat=111111111111111111');
-//
-//		$rss = fetch_feed( $this->iso_attributes['rss'] );
-//		$num = $this->iso_attributes['num'];
-//		
-//		$paged = get_query_var( 'paged' );
-//		
-//		if($paged > 0 )
-//			$paged--;
-//		else
-//			$paged = 0;
-//		
-//		$start = $num*$paged;
-		
-		// todo: make pagination work for rss as well
-
-//		if (!is_wp_error( $rss ) ) :
-//
-//			$maxitems = $rss->get_item_quantity();
-//			$rss_items = $rss->get_items($start, $num);
-//		
-//		endif;
-//		
-//		$this->total_pages = ceil ( $maxitems / $num );
-//		$found_posts = 0;
-//		foreach ($rss_items as $item):
-//
-//
-//			$post = (object) null;
-//			$post->ID = $item->get_id();
-//			$post->post_type = 'post';
-//			$post->is_iso_shortcode_feed = true;
-//			$post->post_title = $item->get_title();
-//			$post->guid = $item->get_permalink();
-//			$post->post_content = apply_filters('the_content', $item->get_content() );
-//			$post->post_excerpt = apply_filters('the_excerpt', $item->get_description() );
-//			$post->taxonomy = array();// ();
-//			$post->post_date = $item->get_date('Y-m-d H:i:s');
-//			$post->post_content_filtered = $item;
-//			$rss_mock_query->post = $post;
-//
-//			array_push($rss_mock_query->posts, $post);
-//			$found_posts++;
-//
-//		endforeach;
-
-		// $rss_mock_query->post_count = $maxitems;
-//		$rss_mock_query->found_posts = ''. $found_posts;
-//		$rss_mock_query->post_count = $num;
-//		
-//
-//		if ( $rss_mock_query->have_posts() ) :
-//			while ( $rss_mock_query->have_posts() ) : $rss_mock_query->the_post();
-//
-//				$this->display_output();
-//				$this->odd_or_even++;
-//				$this->counter++;
-//
-//			endwhile;
-//
-//			$this->paginate();
-//
-//		else:
-//			$this->show_error();
-//		endif;
-//		
-//		wp_reset_query();
-//	}
-	
 	/**
 	 * paginate function.
 	 *
@@ -774,48 +765,21 @@ class Educ_Iso_Shortcode {
 	 * @access public
 	 * @return void
 	 */
+
 	function display_output(){
 		global $post;
-		
+
 		if( !$post->ID )
 			return '';
-		
-		if( $this->content  ):
 
-			echo apply_filters( 'iso_content', $this->content );
+		if( $this->content ):
+			//echo "This Word";
+
+			echo  apply_filters( 'iso_content', $this->content);
+
+
 
 		else:
-			switch( $this->iso_attributes['view'] ){
-				
-				default; 
-					$this->custom_modal_output();
-				break;
-					
-				case 'simple':
-				case 'simple_modal':
-					$this->simple_modal_output();
-				break;
-				
-				case 'block':
-				case 'block_modal':
-					$this->block_modal_output();
-				break;
-				
-				case 'custom_modal':
-				case 'custom':
-					$this->custom_modal_output();
-				break;
-				
-				case 'list':
-					$this->list_output();
-				break;
-				
-			}
-		endif;
-	}
-	
-	function modal_insert() { 
-	$adjacent_post = get_adjacent_post(false,'',true);
 		// Categories Setup
 		$categories = get_the_category();
 			$output_cat = ' ';
@@ -854,6 +818,29 @@ class Educ_Iso_Shortcode {
 					$the_tag_links =  trim($output_tag_header);
 			}
 
+
+
+		// Custom Taxonomy setup
+		$iso_taxonomies = $this->iso_query->get( 'taxonomy' );	
+
+		$output_tax = '';
+		$posttax = get_the_terms( $post->ID, $iso_taxonomies);
+		if ($posttax) {
+			foreach($posttax as $tax_iso) {
+				$output_tax .= $tax_iso->slug . ' '; 
+			}
+		}
+		$the_tax_slug = $output_tax;
+		 
+		$post_tax_header = get_the_terms( $post->ID, $iso_taxonomies);
+			$output_tax_header = ' ';
+			if($post_tax_header){
+				foreach($post_tax_header as $tax_head) {
+					$output_tax_header .= $tax_head->name;
+				}
+					$the_tax_links =  trim($output_tax_header);
+			}
+
 		// Output Setup
 		switch ( $this->iso_attributes['filter_by'] ){
         	default: "tags";
@@ -871,10 +858,331 @@ class Educ_Iso_Shortcode {
 				$the_iso_filter = $the_category_slug;
 				$the_iso_header_tag = $the_category_link;
            break;
+
+            case "custom_post":
+				$the_iso_filter = $the_tax_slug;
+				$the_iso_header_tag = $the_tax_links;
+            break;
        }		
-		
-		//$iso_excerpt = the_excerpt();
-		//$trimmed_excerpt = wp_trim_words( $iso_excerpt, 10, '...' );
+       		switch( $this->iso_attributes['view'] ){
+				
+				default; 
+					$this->custom_modal_output();
+				break;
+					
+				case 'simple':
+				case 'simple_modal': ?>
+					<div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?>">
+					  <?php if( function_exists( 'do_atomic' ) ): ?>
+			          <div class="<?php echo $this->iso_attributes['iso_object'] ?> entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px"> 
+			               <div class="boxey-inside">
+			                <small class="header-tags"><?php echo $the_iso_header_tag;?></small>
+			              <div class="boxey-inner">
+			                <?php if ( has_post_thumbnail() ) :?>
+			               <a title="<?php the_title(); ?>" href="<?php 
+								   if ($this->iso_attributes['view'] == "simple_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "simple" ):
+										echo the_permalink();
+									endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'img-circle')); ?></a>
+			               <?php endif; ?>
+			                        <h3 class="post-title"> <a href="<?php 
+								   if ($this->iso_attributes['view'] == "simple_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "simple" ):
+										echo the_permalink();
+									endif; ?>" role="button" data-toggle="modal"><div class="iso-title"><?php the_title(); ?></div></a><br />
+			                            <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date">
+			                                <?php echo get_the_date(); ?><br />
+			                            </small><?php endif; ?>
+			                        </h3>
+			               
+			                          <div class="excerpt">
+			                          <div class="iso-description"><?php the_excerpt(); ?></div>
+			                          </div>
+			                        <a href="<?php 
+								   if ($this->iso_attributes['view'] == "simple_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "simple" ):
+										echo the_permalink();
+									endif; ?>" role="button" class=" btn launch-btn" data-toggle="modal"> Launch</a>
+			              </div>
+			              <!-- end #boxey-inner --> 
+			              
+			            </div>
+			            <!-- end #boxey-inside -->
+			            
+			        	<?php 
+						if ($this->iso_attributes['view'] == "simple_modal" ):
+							$this->modal_insert();
+			            endif;
+			            ?>
+
+			       </div>
+			      <!-- .entry-content -->
+			      
+			      <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
+			      <?php else: ?>
+			      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
+			                <div class="entry-header">
+			          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
+			            <?php the_title(); ?>
+			            </a></h2>
+			        </div>
+			                <?php the_content(); ?>
+			                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
+			                <div class="entry-meta">
+			          <?php $this->entry_meta(); ?>
+			          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
+			        </div>
+			                <!-- .entry-meta --> 
+			              </div>
+			      <!-- .entry-content -->
+			      <?php endif; ?>
+			    </div>
+			            <!-- .hentry -->
+				<?php break;
+				
+				case 'block':
+				case 'block_modal': ?>
+			        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter;?> match mix">
+			  			<?php if( function_exists( 'do_atomic' ) ): ?>
+			  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> match mix entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
+							 <small class="header-tags"><?php echo $the_iso_header_tag;?></small>
+			            		<div class="boxey-inside <?php echo $the_iso_filter; ?>">
+									<?php if ( has_post_thumbnail() ) :?>
+			                       <a title="<?php the_title(); ?>" href="<?php 
+								   if ($this->iso_attributes['view'] == "block_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "block" ):
+										echo the_permalink();
+									endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'img-circle')); ?></a>
+			                       <?php endif; ?>
+			      				<div class="boxey-inner">
+			                		<h3 class="post-title media-title"> <a href="<?php 
+								   if ($this->iso_attributes['view'] == "block_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "block" ):
+										echo the_permalink();
+									endif; ?>" role="button" data-toggle="modal"><div class="iso-title"><?php the_title(); ?></div></a><br />
+			                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+			                  		<div class="iso-description"><?php the_excerpt(); ?></div>
+			                		<a href="<?php 
+								   if ($this->iso_attributes['view'] == "block_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "block" ):
+										echo the_permalink();
+									endif; ?>" role="button" class=" btn btn-small launch-btn" data-toggle="modal">Launch</a> </a></div>
+			      				<!-- end #boxey-inner --> 
+			    				</div>
+			            		<!-- end #boxey-inside -->
+			        	<?php 
+						if ($this->iso_attributes['view'] == "block_modal" ):
+							$this->modal_insert();
+			            endif;
+			            ?>
+
+			     </div>
+			  <!-- .entry-content -->
+			  
+			  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
+			  <?php else: ?>
+			      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
+			                <div class="entry-header">
+			          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
+			            <?php the_title(); ?>
+			            </a></h2>
+			        </div>
+			                <?php the_content(); ?>
+			                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
+			                <div class="entry-meta">
+			          <?php $this->entry_meta(); ?>
+			          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
+			        </div>
+			                <!-- .entry-meta --> 
+			                
+			              </div>
+			      <!-- .entry-content -->
+			      <?php endif; ?>
+			    </div>
+            <!-- .hentry -->
+
+				<?php
+				break;
+				
+				case 'custom_modal':
+				case 'custom': ?>
+					 <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?>">
+			  			<?php if( function_exists( 'do_atomic' ) ): ?>
+			  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
+							<small class="header-tags"><?php echo $the_iso_header_tag;?></small>
+			            		<div class="boxey-inside <?php echo $the_iso_filter; ?>">
+									<?php if ( has_post_thumbnail() ) :?>
+			                       <a title="<?php the_title(); ?>" href="<?php 
+								   if ($this->iso_attributes['view'] == "custom_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "custom" ):
+										echo the_permalink();
+									endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'iso-img-custom')); ?></a>
+			                       <?php endif; ?>
+			      				<div class="boxey-inner">
+			                		<h3 class="post-title media-title modal-title"> <a href="<?php 
+								   if ($this->iso_attributes['view'] == "custom_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "custom" ):
+										echo the_permalink();
+									endif; ?>" role="button" data-toggle="modal"><div class="iso-title"><?php the_title(); ?></div></a><br />
+			                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+			                  		<div class="iso-description"><?php the_excerpt(); ?></div>
+			                		<a href="<?php 
+								   if ($this->iso_attributes['view'] == "custom_modal" ):
+										echo '#';
+										echo the_ID();
+									elseif ($this->iso_attributes['view'] == "custom" ):
+										echo the_permalink();
+									endif; ?>" role="button" class=" btn btn-small launch-btn" data-toggle="modal">Launch</a> </a></div>
+			      				<!-- end #boxey-inner --> 
+			    				</div>
+			            		<!-- end #boxey-inside -->
+			        	<?php 
+						if ($this->iso_attributes['view'] == "custom_modal" ):
+							$this->modal_insert();
+			            endif;
+			            ?>
+
+			     </div>
+			  <!-- .entry-content -->
+			  
+			  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
+			  <?php else: ?>
+			      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
+			                <div class="entry-header">
+			          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
+			            <?php the_title(); ?>
+			            </a></h2>
+			        </div>
+			                <?php the_content(); ?>
+			                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
+			                <div class="entry-meta">
+			          <?php $this->entry_meta(); ?>
+			          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
+			        </div>
+			                <!-- .entry-meta --> 
+			                
+			              </div>
+			      <!-- .entry-content -->
+			      <?php endif; ?>
+			    </div>
+			            <!-- .hentry -->
+				<?php break;
+				
+				case 'list': ?>
+					<li id="<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?> iso-list"><h3><small><?php the_tags( ' ',' ' ,' ' ); ?></small><br /><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><div class="iso-title"><?php the_title(); ?></div></a><br />
+			        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
+			        <div class="iso-description"><?php the_excerpt(); ?></div>
+			        </li>
+				<?php break;
+				
+			}
+		endif;
+	}
+	
+	function modal_insert() { 
+
+		// Output Setup
+		switch ( $this->iso_attributes['filter_by'] ){
+        	default: "tags";
+            break;
+                                        
+            case "tags":
+            case "tag":
+
+				// Tags Setup
+				$output_tag = '';
+				$posttags = get_the_tags();
+				if ($posttags) {
+					foreach($posttags as $tag) {
+						$output_tag .= $tag->slug . ' '; 
+					}
+				}
+				$the_tag_slug = $output_tag;
+				 
+				$the_tag_header = get_the_tags();
+					$output_tag_header = ' ';
+					if($the_tag_header){
+						foreach($the_tag_header as $tag_head) {
+							$output_tag_header .= '<a href="'.get_tag_link( $tag_head->term_id ).'" title="' . $tag_head->name . '">'.$tag_head->name.'</a>';
+						}
+							$the_tag_links =  trim($output_tag_header);
+					}
+
+
+				$the_iso_filter = $the_tag_slug;
+				$the_iso_header_tag = $the_tag_links;
+            break;
+                                        
+           case "category":
+           case "categories":
+		   case "cat":
+			// Categories Setup
+			$categories = get_the_category();
+				$output_cat = ' ';
+				if($categories){
+					foreach($categories as $category) {
+						$output_cat .= $category->slug.' ';
+					}
+						$the_category_slug =  trim($output_cat);
+				}
+				
+			$the_category_header = get_the_category();
+				$output_cat_header = ' ';
+				if($the_category_header){
+					foreach($the_category_header as $cat_head) {
+						$output_cat_header .= '<a href="'.get_category_link( $cat_head->term_id ).'" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $cat_head->name ) ) . '">'.$cat_head->cat_name.'</a>';
+					}
+						$the_category_link =  trim($output_cat_header);
+				}
+
+
+				$the_iso_filter = $the_category_slug;
+				$the_iso_header_tag = $the_category_link;
+           break;
+
+            case "custom_post":
+
+				// Custom Taxonomy setup
+				$output_tax = '';
+				$posttax = get_the_terms( $post->ID, 'taxonomy');
+				if ($posttax) {
+					foreach($posttax as $tax_iso) {
+						$output_tax .= $tax_iso->slug . ' '; 
+					}
+				}
+				$the_tax_slug = $output_tax;
+
+
+				$post_tax_header = get_the_terms( $post->ID, 'taxonomy');
+					$output_tax_header = ' ';
+					if($post_tax_header){
+						foreach($post_tax_header as $tax_head) {
+							$output_tax_header .= $tax_head->name;
+						}
+							$the_tax_links =  trim($output_tax_header);
+					}            
+				$the_iso_filter = $the_tax_slug;
+				$the_iso_header_tag = $the_tax_links;
+            break;
+       }
+
+       $next_post = get_adjacent_post();	
 	?>
              <!-- Start Modal -->
             <div id="<?php the_ID(); ?>" class="<?php echo $this->iso_attributes['view']; ?> modal fade hide container" tabindex="-1" role="dialog" aria-labelledby="myModalLabel_<?php the_ID(); ?>" aria-hidden="true">
@@ -914,7 +1222,9 @@ class Educ_Iso_Shortcode {
               </div>
               <!-- end .modal-body -->
               <div class="modal-footer">
-              <div class="nav-previous alignleft">Read Next: <a href="#<?php echo $adjacent_post->ID; ?>" title="Read <?php echo $adjacent_post->post_title; ?>" role="button" data-toggle="modal"><strong><?php echo $adjacent_post->post_title; ?></strong> <i class="icon-chevron-sign-right belize-hole"></i></a></div>
+              <!--  <div class="nav-previous alignleft">Read Next: <?php //if (!empty( $next_post )): ?>
+  <a href="<?php //echo get_permalink( $next_post->ID ); ?>"><?php //echo $next_post->post_title; ?></a>
+		<?php // endif; ?> <i class="icon-chevron-sign-right belize-hole"></i></a></div> -->
         <a href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">open full page <i class="icon-share-alt belize-hole"></i></a> <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
             </div>
             <!-- End modal-footer -->
@@ -923,479 +1233,6 @@ class Educ_Iso_Shortcode {
         <!-- End .modal -->
         
 	<?php	
-	}
-		/**
-	 * block_modal_output function.
-	 * View as block modal or block
-	 * @access public
-	 * @return void
-	 */
-	function block_modal_output() { 
-		// Categories Setup
-		$categories = get_the_category();
-			$output_cat = ' ';
-			if($categories){
-				foreach($categories as $category) {
-					$output_cat .= $category->slug.' ';
-				}
-					$the_category_slug =  trim($output_cat);
-			}
-			
-		$the_category_header = get_the_category();
-			$output_cat_header = ' ';
-			if($the_category_header){
-				foreach($the_category_header as $cat_head) {
-					$output_cat_header .= '<a href="'.get_category_link( $cat_head->term_id ).'" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $cat_head->name ) ) . '">'.$cat_head->cat_name.'</a>';
-				}
-					$the_category_link =  trim($output_cat_header);
-			}
-			
-		// Tags Setup
-		$output_tag = '';
-		$posttags = get_the_tags();
-		if ($posttags) {
-			foreach($posttags as $tag) {
-				$output_tag .= $tag->slug . ' '; 
-			}
-		}
-		$the_tag_slug = $output_tag;
-		 
-		$the_tag_header = get_the_tags();
-			$output_tag_header = ' ';
-			if($the_tag_header){
-				foreach($the_tag_header as $tag_head) {
-					$output_tag_header .= '<a href="'.get_tag_link( $tag_head->term_id ).'" title="' . $tag_head->name . '">'.$tag_head->name.'</a>';
-				}
-					$the_tag_links =  trim($output_tag_header);
-			}
-
-		// Output Setup
-		switch ( $this->iso_attributes['filter_by'] ){
-        	default: "tags";
-            break;
-                                        
-            case "tags":
-            case "tag":
-				$the_iso_filter = $the_tag_slug;
-				$the_iso_header_tag = $the_tag_links;
-            break;
-                                        
-           case "category":
-           case "categories":
-		   case "cat":
-				$the_iso_filter = $the_category_slug;
-				$the_iso_header_tag = $the_category_link;
-           break;
-		}
-		$iso_num = 1;
-	?>
-        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter;?> match mix">
-  			<?php if( function_exists( 'do_atomic' ) ): ?>
-  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> match mix entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
-				 <small class="header-tags"><?php echo $the_iso_header_tag;?></small>
-            		<div class="boxey-inside <?php echo $the_iso_filter; ?>">
-						<?php if ( has_post_thumbnail() ) :?>
-                       <a title="<?php the_title(); ?>" href="<?php 
-					   if ($this->iso_attributes['view'] == "block_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "block" ):
-							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'img-circle')); ?></a>
-                       <?php endif; ?>
-      				<div class="boxey-inner">
-                		<h3 class="post-title media-title"> <a href="<?php 
-					   if ($this->iso_attributes['view'] == "block_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "block" ):
-							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
-                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
-                  		<span class="iso-description"><?php the_excerpt(); ?></span>
-                		<a href="<?php 
-					   if ($this->iso_attributes['view'] == "block_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "block" ):
-							echo the_permalink();
-						endif; ?>" role="button" class=" btn btn-small launch-btn" data-toggle="modal"><i class="icon-rocket"></i> Launch</a> </a></div>
-      				<!-- end #boxey-inner --> 
-    				</div>
-            		<!-- end #boxey-inside -->
-        	<?php 
-			if ($this->iso_attributes['view'] == "block_modal" ):
-				$this->modal_insert();
-            endif;
-            ?>
-
-     </div>
-  <!-- .entry-content -->
-  
-  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
-  <?php else: ?>
-      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
-                <div class="entry-header">
-          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
-            <?php the_title(); ?>
-            </a></h2>
-        </div>
-                <?php the_content(); ?>
-                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
-                <div class="entry-meta">
-          <?php $this->entry_meta(); ?>
-          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
-        </div>
-                <!-- .entry-meta --> 
-                
-              </div>
-      <!-- .entry-content -->
-      <?php endif; ?>
-    </div>
-            <!-- .hentry -->
-    <?php 
-	
-	}
-	/**
-	 * simple_modal_output function.
-	 * Returns view based on simple or simple modal
-	 * @access public
-	 * @return void
-	 */
-	function simple_modal_output() { 
-		// Categories Setup
-		$categories = get_the_category();
-			$output_cat = ' ';
-			if($categories){
-				foreach($categories as $category) {
-					$output_cat .= $category->slug.' ';
-				}
-					$the_category_slug =  trim($output_cat);
-			}
-			
-		$the_category_header = get_the_category();
-			$output_cat_header = ' ';
-			if($the_category_header){
-				foreach($the_category_header as $cat_head) {
-					$output_cat_header .= '<a href="'.get_category_link( $cat_head->term_id ).'" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $cat_head->name ) ) . '">'.$cat_head->cat_name.'</a>';
-				}
-					$the_category_link =  trim($output_cat_header);
-			}
-			
-		// Tags Setup
-		$output_tag = '';
-		$posttags = get_the_tags();
-		if ($posttags) {
-			foreach($posttags as $tag) {
-				$output_tag .= $tag->slug . ' '; 
-			}
-		}
-		$the_tag_slug = $output_tag;
-		 
-		$the_tag_header = get_the_tags();
-			$output_tag_header = ' ';
-			if($the_tag_header){
-				foreach($the_tag_header as $tag_head) {
-					$output_tag_header .= '<a href="'.get_tag_link( $tag_head->term_id ).'" title="' . $tag_head->name . '">'.$tag_head->name.'</a>';
-				}
-					$the_tag_links =  trim($output_tag_header);
-			}
-
-		// Output Setup
-		switch ( $this->iso_attributes['filter_by'] ){
-        	default: "tags";
-            break;
-                                        
-            case "tags":
-            case "tag":
-				$the_iso_filter = $the_tag_slug;
-				$the_iso_header_tag = $the_tag_links;
-            break;
-                                        
-           case "category":
-           case "categories":
-		   case "cat":
-				$the_iso_filter = $the_category_slug;
-				$the_iso_header_tag = $the_category_link;
-           break;
-		}
-	?>    
-        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?>">
-		  <?php if( function_exists( 'do_atomic' ) ): ?>
-          <div class="<?php echo $this->iso_attributes['iso_object'] ?> entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px"> 
-               <div class="boxey-inside">
-                <small class="header-tags"><?php echo $the_iso_header_tag;?></small>
-              <div class="boxey-inner">
-                <?php if ( has_post_thumbnail() ) :?>
-               <a title="<?php the_title(); ?>" href="<?php 
-					   if ($this->iso_attributes['view'] == "simple_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "simple" ):
-							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'img-circle')); ?></a>
-               <?php endif; ?>
-                        <h3 class="post-title"> <a href="<?php 
-					   if ($this->iso_attributes['view'] == "simple_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "simple" ):
-							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
-                            <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date">
-                                <?php echo get_the_date(); ?><br />
-                            </small><?php endif; ?>
-                        </h3>
-               
-                          <div class="excerpt">
-                          <span class="iso-description"><?php the_excerpt(); ?></span>
-                          </div>
-                        <a href="<?php 
-					   if ($this->iso_attributes['view'] == "simple_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "simple" ):
-							echo the_permalink();
-						endif; ?>" role="button" class=" btn launch-btn" data-toggle="modal"> Launch</a>
-              </div>
-              <!-- end #boxey-inner --> 
-              
-            </div>
-            <!-- end #boxey-inside -->
-            
-        	<?php 
-			if ($this->iso_attributes['view'] == "simple_modal" ):
-				$this->modal_insert();
-            endif;
-            ?>
-
-       </div>
-      <!-- .entry-content -->
-      
-      <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
-      <?php else: ?>
-      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
-                <div class="entry-header">
-          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
-            <?php the_title(); ?>
-            </a></h2>
-        </div>
-                <?php the_content(); ?>
-                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
-                <div class="entry-meta">
-          <?php $this->entry_meta(); ?>
-          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
-        </div>
-                <!-- .entry-meta --> 
-              </div>
-      <!-- .entry-content -->
-      <?php endif; ?>
-    </div>
-            <!-- .hentry -->
-	<?php
-	}
-	/**
-	 * custom_modal_output function.
-	 * Returns view based on custom or custom modal
-	 * @access public
-	 * @return void
-	 */
-	function custom_modal_output() { 
-		// Categories Setup
-		$categories = get_the_category();
-			$output_cat = ' ';
-			if($categories){
-				foreach($categories as $category) {
-					$output_cat .= $category->slug.' ';
-				}
-					$the_category_slug =  trim($output_cat);
-			}
-			
-		$the_category_header = get_the_category();
-			$output_cat_header = ' ';
-			if($the_category_header){
-				foreach($the_category_header as $cat_head) {
-					$output_cat_header .= '<a href="'.get_category_link( $cat_head->term_id ).'" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $cat_head->name ) ) . '">'.$cat_head->cat_name.'</a>';
-				}
-					$the_category_link =  trim($output_cat_header);
-			}
-			
-		// Tags Setup
-		$output_tag = '';
-		$posttags = get_the_tags();
-		if ($posttags) {
-			foreach($posttags as $tag) {
-				$output_tag .= $tag->slug . ' '; 
-			}
-		}
-		$the_tag_slug = $output_tag;
-		 
-		$the_tag_header = get_the_tags();
-			$output_tag_header = ' ';
-			if($the_tag_header){
-				foreach($the_tag_header as $tag_head) {
-					$output_tag_header .= '<a href="'.get_tag_link( $tag_head->term_id ).'" title="' . $tag_head->name . '">'.$tag_head->name.'</a>';
-				}
-					$the_tag_links =  trim($output_tag_header);
-			}
-
-		// Output Setup
-		switch ( $this->iso_attributes['filter_by'] ){
-        	default: "tags";
-            break;
-                                        
-            case "tags":
-            case "tag":
-				$the_iso_filter = $the_tag_slug;
-				$the_iso_header_tag = $the_tag_links;
-            break;
-                                        
-           case "category":
-           case "categories":
-		   case "cat":
-				$the_iso_filter = $the_category_slug;
-				$the_iso_header_tag = $the_category_link;
-           break;
-		}
-	?>
-        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?>">
-  			<?php if( function_exists( 'do_atomic' ) ): ?>
-  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
-				<small class="header-tags"><?php echo $the_iso_header_tag;?></small>
-            		<div class="boxey-inside <?php echo $the_iso_filter; ?>">
-						<?php if ( has_post_thumbnail() ) :?>
-                       <a title="<?php the_title(); ?>" href="<?php 
-					   if ($this->iso_attributes['view'] == "custom_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "custom" ):
-							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'iso-img-custom')); ?></a>
-                       <?php endif; ?>
-      				<div class="boxey-inner">
-                		<h3 class="post-title media-title modal-title"> <a href="<?php 
-					   if ($this->iso_attributes['view'] == "custom_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "custom" ):
-							echo the_permalink();
-						endif; ?>" role="button" data-toggle="modal"><span class="iso-title"><?php the_title(); ?></span></a><br />
-                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
-                  		<span class="iso-description"><?php the_excerpt(); ?></span>
-                		<a href="<?php 
-					   if ($this->iso_attributes['view'] == "custom_modal" ):
-							echo '#';
-							echo the_ID();
-						elseif ($this->iso_attributes['view'] == "custom" ):
-							echo the_permalink();
-						endif; ?>" role="button" class=" btn btn-small launch-btn" data-toggle="modal"><i class="icon-rocket"></i> Launch</a> </a></div>
-      				<!-- end #boxey-inner --> 
-    				</div>
-            		<!-- end #boxey-inside -->
-        	<?php 
-			if ($this->iso_attributes['view'] == "custom_modal" ):
-				$this->modal_insert();
-            endif;
-            ?>
-
-     </div>
-  <!-- .entry-content -->
-  
-  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
-  <?php else: ?>
-      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
-                <div class="entry-header">
-          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
-            <?php the_title(); ?>
-            </a></h2>
-        </div>
-                <?php the_content(); ?>
-                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
-                <div class="entry-meta">
-          <?php $this->entry_meta(); ?>
-          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
-        </div>
-                <!-- .entry-meta --> 
-                
-              </div>
-      <!-- .entry-content -->
-      <?php endif; ?>
-    </div>
-            <!-- .hentry -->
-    <?php 
-	
-	}
-
-	/**
-	 * list_output function.
-	 *
-	 * @access public
-	 * @return void
-	 */
-	function list_output() {
-		// Categories Setup
-		$categories = get_the_category();
-			$output_cat = ' ';
-			if($categories){
-				foreach($categories as $category) {
-					$output_cat .= $category->slug.' ';
-				}
-					$the_category_slug =  trim($output_cat);
-			}
-			
-		$the_category_header = get_the_category();
-			$output_cat_header = ' ';
-			if($the_category_header){
-				foreach($the_category_header as $cat_head) {
-					$output_cat_header .= '<a href="'.get_category_link( $cat_head->term_id ).'" title="' . esc_attr( sprintf( __( "View all posts in %s" ), $cat_head->name ) ) . '">'.$cat_head->cat_name.'</a>';
-				}
-					$the_category_link =  trim($output_cat_header);
-			}
-			
-		// Tags Setup
-		$output_tag = '';
-		$posttags = get_the_tags();
-		if ($posttags) {
-			foreach($posttags as $tag) {
-				$output_tag .= $tag->slug . ' '; 
-			}
-		}
-		$the_tag_slug = $output_tag;
-		 
-		$the_tag_header = get_the_tags();
-			$output_tag_header = ' ';
-			if($the_tag_header){
-				foreach($the_tag_header as $tag_head) {
-					$output_tag_header .= '<a href="'.get_tag_link( $tag_head->term_id ).'" title="' . $tag_head->name . '">'.$tag_head->name.'</a>';
-				}
-					$the_tag_links =  trim($output_tag_header);
-			}
-
-		// Output Setup
-		switch ( $this->iso_attributes['filter_by'] ){
-        	default: "tags";
-            break;
-                                        
-            case "tags":
-            case "tag":
-				$the_iso_filter = $the_tag_slug;
-				$the_iso_header_tag = $the_tag_links;
-            break;
-                                        
-           case "category":
-           case "categories":
-		   case "cat":
-				$the_iso_filter = $the_category_slug;
-				$the_iso_header_tag = $the_category_link;
-           break;
-		}
-		
-		?>
-		<li id="<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?> iso-list"><h3><small><?php the_tags( ' ',' ' ,' ' ); ?></small><br /><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><span class="iso-title"><?php the_title(); ?></span></a><br />
-        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
-        <span class="iso-description"><?php the_excerpt(); ?></span>
-        </li>
-		<?php
 	}
 	/* helper filters */
 	
@@ -1530,7 +1367,7 @@ class Educ_Iso_Shortcode {
 
     <?php	if ($this->iso_attributes['searchable'] == 'true'): ?>
     //Makes the titles searchable
-	$('span.iso-title').each(function(){
+	$('div.iso-title').each(function(){
 			var tmp = {};
 			<?php if ($this->iso_attributes['view'] == "list"): ?>
 			tmp.id = $(this).parent().parent().parent().attr('id');
@@ -1541,7 +1378,7 @@ class Educ_Iso_Shortcode {
 			items.push( tmp );
 		});
 	//Makes the excerpt searchable
-	$('span.iso-description').each(function(){
+	$('div.iso-description').each(function(){
 			var tmp = {};
 			<?php if ($this->iso_attributes['view'] == "block_modal" || $this->iso_attributes['view'] =="custom_modal" || $this->iso_attributes['view'] == "block" || $this->iso_attributes['view'] =="custom"): ?>
 			tmp.id = $(this).parent().parent().parent().parent().attr('id');

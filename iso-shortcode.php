@@ -1,9 +1,9 @@
 <?php
 /*
-* Plugin Name: Isotope Shortcode
+* Plugin Name: UBC Isotope Shortcode
 * Plugin URI: 
-* Description: Isotope shortcode plugin.
-* Version: 1.0
+* Description: UBC Isotope shortcode plugin.
+* Version: 1.0.1
 * Author: UBC CMS + David Brabbins
 * Author URI:http://cms.ubc.ca
 *
@@ -873,13 +873,12 @@ class Educ_Iso_Shortcode {
 				case 'simple':
 				case 'simple_modal': ?>
 					<div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?>">
-					  <?php if( function_exists( 'do_atomic' ) ): ?>
 			          <div class="<?php echo $this->iso_attributes['iso_object'] ?> entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px"> 
 			               <div class="boxey-inside">
 			                <small class="header-tags"><?php echo $the_iso_header_tag;?></small>
 			              <div class="boxey-inner">
 			                <?php if ( has_post_thumbnail() ) :?>
-			               <a title="<?php the_title(); ?>" href="<?php 
+			               <a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "simple_modal" ):
 										echo '#';
 										echo the_ID();
@@ -887,7 +886,7 @@ class Educ_Iso_Shortcode {
 										echo the_permalink();
 									endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'img-circle')); ?></a>
 			               <?php endif; ?>
-			                        <h3 class="post-title"> <a href="<?php 
+			                        <h3 class="post-title"> <a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "simple_modal" ):
 										echo '#';
 										echo the_ID();
@@ -902,18 +901,26 @@ class Educ_Iso_Shortcode {
 			                          <div class="excerpt">
 			                          <div class="iso-description"><?php the_excerpt(); ?></div>
 			                          </div>
-			                        <a href="<?php 
+			                        <a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "simple_modal" ):
 										echo '#';
 										echo the_ID();
 									elseif ($this->iso_attributes['view'] == "simple" ):
 										echo the_permalink();
 									endif; ?>" role="button" class=" btn launch-btn" data-toggle="modal"> Launch</a>
-			              </div>
-			              <!-- end #boxey-inner --> 
-			              
-			            </div>
-			            <!-- end #boxey-inside -->
+
+								  <?php if( function_exists( 'do_atomic' ) ): ?>
+								  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
+								  <?php else: ?>
+								                <div class="entry-meta">
+								                	<?php $this->iso_meta(); ?>
+									        	</div>
+								                <!-- .entry-meta --> 
+								      <?php endif; ?>
+								  </div>
+			      				<!-- end #boxey-inner --> 
+			    				</div>
+			            		<!-- end #boxey-inside -->
 			            
 			        	<?php 
 						if ($this->iso_attributes['view'] == "simple_modal" ):
@@ -923,38 +930,18 @@ class Educ_Iso_Shortcode {
 
 			       </div>
 			      <!-- .entry-content -->
-			      
-			      <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
-			      <?php else: ?>
-			      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
-			                <div class="entry-header">
-			          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
-			            <?php the_title(); ?>
-			            </a></h2>
-			        </div>
-			                <?php the_content(); ?>
-			                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
-			                <div class="entry-meta">
-			          <?php $this->entry_meta(); ?>
-			          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
-			        </div>
-			                <!-- .entry-meta --> 
-			              </div>
-			      <!-- .entry-content -->
-			      <?php endif; ?>
 			    </div>
-			            <!-- .hentry -->
+			    <!-- .hentry -->
 				<?php break;
 				
 				case 'block':
 				case 'block_modal': ?>
 			        <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter;?> match mix">
-			  			<?php if( function_exists( 'do_atomic' ) ): ?>
 			  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> match mix entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
 							 <small class="header-tags"><?php echo $the_iso_header_tag;?></small>
 			            		<div class="boxey-inside <?php echo $the_iso_filter; ?>">
 									<?php if ( has_post_thumbnail() ) :?>
-			                       <a title="<?php the_title(); ?>" href="<?php 
+			                       <a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "block_modal" ):
 										echo '#';
 										echo the_ID();
@@ -963,7 +950,7 @@ class Educ_Iso_Shortcode {
 									endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'img-circle')); ?></a>
 			                       <?php endif; ?>
 			      				<div class="boxey-inner">
-			                		<h3 class="post-title media-title"> <a href="<?php 
+			                		<h3 class="post-title media-title"> <a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "block_modal" ):
 										echo '#';
 										echo the_ID();
@@ -972,13 +959,23 @@ class Educ_Iso_Shortcode {
 									endif; ?>" role="button" data-toggle="modal"><div class="iso-title"><?php the_title(); ?></div></a><br />
 			                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
 			                  		<div class="iso-description"><?php the_excerpt(); ?></div>
-			                		<a href="<?php 
+			                		<a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "block_modal" ):
 										echo '#';
 										echo the_ID();
 									elseif ($this->iso_attributes['view'] == "block" ):
 										echo the_permalink();
-									endif; ?>" role="button" class=" btn btn-small launch-btn" data-toggle="modal">Launch</a> </a></div>
+									endif; ?>" role="button" class=" btn btn-small launch-btn" data-toggle="modal">Launch</a> </a>
+
+								  <?php if( function_exists( 'do_atomic' ) ): ?>
+								  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
+								  <?php else: ?>
+								                <div class="entry-meta">
+								                	<?php $this->iso_meta(); ?>
+									        	</div>
+								                <!-- .entry-meta --> 
+								      <?php endif; ?>
+								  </div>
 			      				<!-- end #boxey-inner --> 
 			    				</div>
 			            		<!-- end #boxey-inside -->
@@ -990,26 +987,6 @@ class Educ_Iso_Shortcode {
 
 			     </div>
 			  <!-- .entry-content -->
-			  
-			  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
-			  <?php else: ?>
-			      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
-			                <div class="entry-header">
-			          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
-			            <?php the_title(); ?>
-			            </a></h2>
-			        </div>
-			                <?php the_content(); ?>
-			                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
-			                <div class="entry-meta">
-			          <?php $this->entry_meta(); ?>
-			          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
-			        </div>
-			                <!-- .entry-meta --> 
-			                
-			              </div>
-			      <!-- .entry-content -->
-			      <?php endif; ?>
 			    </div>
             <!-- .hentry -->
 
@@ -1019,12 +996,11 @@ class Educ_Iso_Shortcode {
 				case 'custom_modal':
 				case 'custom': ?>
 					 <div id="post-<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?>">
-			  			<?php if( function_exists( 'do_atomic' ) ): ?>
 			  				<div class="<?php echo $this->iso_attributes['iso_object'] ?> entry-content" style="width:<?php echo $this->iso_attributes['box_width']; ?>px">
 							<small class="header-tags"><?php echo $the_iso_header_tag;?></small>
 			            		<div class="boxey-inside <?php echo $the_iso_filter; ?>">
 									<?php if ( has_post_thumbnail() ) :?>
-			                       <a title="<?php the_title(); ?>" href="<?php 
+			                       <a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "custom_modal" ):
 										echo '#';
 										echo the_ID();
@@ -1033,7 +1009,7 @@ class Educ_Iso_Shortcode {
 									endif; ?>" role="button" data-toggle="modal"><?php echo the_post_thumbnail('medium', array('class' =>'iso-img-custom')); ?></a>
 			                       <?php endif; ?>
 			      				<div class="boxey-inner">
-			                		<h3 class="post-title media-title modal-title"> <a href="<?php 
+			                		<h3 class="post-title media-title modal-title"> <a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "custom_modal" ):
 										echo '#';
 										echo the_ID();
@@ -1042,16 +1018,27 @@ class Educ_Iso_Shortcode {
 									endif; ?>" role="button" data-toggle="modal"><div class="iso-title"><?php the_title(); ?></div></a><br />
 			                        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
 			                  		<div class="iso-description"><?php the_excerpt(); ?></div>
-			                		<a href="<?php 
+			                		<a title="<?php the_title_attribute(); ?>" href="<?php 
 								   if ($this->iso_attributes['view'] == "custom_modal" ):
 										echo '#';
 										echo the_ID();
 									elseif ($this->iso_attributes['view'] == "custom" ):
 										echo the_permalink();
-									endif; ?>" role="button" class=" btn btn-small launch-btn" data-toggle="modal">Launch</a> </a></div>
+									endif; ?>" role="button" class=" btn btn-small launch-btn" data-toggle="modal">Launch</a> </a>
+
+								  <?php if( function_exists( 'do_atomic' ) ): ?>
+								  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
+								  <?php else: ?>
+								                <div class="entry-meta">
+								                	<?php $this->iso_meta(); ?>
+									        	</div>
+								                <!-- .entry-meta --> 
+								      <?php endif; ?>
+								  </div>
 			      				<!-- end #boxey-inner --> 
 			    				</div>
 			            		<!-- end #boxey-inside -->
+
 			        	<?php 
 						if ($this->iso_attributes['view'] == "custom_modal" ):
 							$this->modal_insert();
@@ -1060,32 +1047,12 @@ class Educ_Iso_Shortcode {
 
 			     </div>
 			  <!-- .entry-content -->
-			  
-			  <?php do_atomic( 'after_entry' ); // hybrid_after_entry ?>
-			  <?php else: ?>
-			      <div class="boxey entry-content full_out <?php echo $the_iso_filter; ?>">
-			                <div class="entry-header">
-			          <h2 class="post-title entry-title placebo"><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">
-			            <?php the_title(); ?>
-			            </a></h2>
-			        </div>
-			                <?php the_content(); ?>
-			                <?php wp_link_pages( array( 'before' => '<div class="page-links pages">' . __( 'Pages:', 'iso-shortcode' ), 'after' => '</div>' ) ); ?>
-			                <div class="entry-meta">
-			          <?php $this->entry_meta(); ?>
-			          <?php edit_post_link( __( 'Edit', 'iso-shortcode' ), '<span class="edit-link">', '</span>' ); ?>
-			        </div>
-			                <!-- .entry-meta --> 
-			                
-			              </div>
-			      <!-- .entry-content -->
-			      <?php endif; ?>
 			    </div>
 			            <!-- .hentry -->
 				<?php break;
 				
 				case 'list': ?>
-					<li id="<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?> iso-list"><h3><small><?php the_tags( ' ',' ' ,' ' ); ?></small><br /><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><div class="iso-title"><?php the_title(); ?></div></a><br />
+					<li id="<?php the_ID(); ?>" class="<?php echo $the_iso_filter; ?> iso-list"><h3><small><?php the_tags( ' ',' ' ,' ' ); ?></small><a title="<?php the_title_attribute(); ?>" href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><div class="iso-title"><?php the_title(); ?></div></a>
 			        <?php if ($this->iso_attributes['show_date'] == 'true') : ?><small class="date"><?php echo get_the_date(); ?></small><?php endif; ?></h3>
 			        <div class="iso-description"><?php the_excerpt(); ?></div>
 			        </li>
@@ -1119,7 +1086,7 @@ class Educ_Iso_Shortcode {
 					$output_tag_header = ' ';
 					if($the_tag_header){
 						foreach($the_tag_header as $tag_head) {
-							$output_tag_header .= '<a href="'.get_tag_link( $tag_head->term_id ).'" title="' . $tag_head->name . '">'.$tag_head->name.'</a>';
+							$output_tag_header .= '<a  href="'.get_tag_link( $tag_head->term_id ).'" title="' . $tag_head->name . '">'.$tag_head->name.'</a>';
 						}
 							$the_tag_links =  trim($output_tag_header);
 					}
@@ -1225,7 +1192,7 @@ class Educ_Iso_Shortcode {
               <!--  <div class="nav-previous alignleft">Read Next: <?php //if (!empty( $next_post )): ?>
   <a href="<?php //echo get_permalink( $next_post->ID ); ?>"><?php //echo $next_post->post_title; ?></a>
 		<?php // endif; ?> <i class="icon-chevron-sign-right belize-hole"></i></a></div> -->
-        <a href="<?php the_permalink(); ?>" title="<?php the_title(); ?>">open full page <i class="icon-share-alt belize-hole"></i></a> <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>">open full page <i class="icon-share-alt belize-hole"></i></a> <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
             </div>
             <!-- End modal-footer -->
             </div>
@@ -1234,8 +1201,10 @@ class Educ_Iso_Shortcode {
         
 	<?php	
 	}
-	/* helper filters */
-	
+	/* meta */
+	function iso_meta() { ?>
+		 <small>Posted on <?php the_time('l, F jS, Y') ?> at <?php the_time() ?>, under <?php the_category(', ') ?>. <?php comments_number( '0 comments', 'One comment', '% comments' ); ?></small>		
+	<?php }
 	/**
 	 * feed_post_thumbnail_html function.
 	 *

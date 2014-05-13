@@ -1,4 +1,4 @@
-=== Iso Shortcode ===
+=== UBC Iso Shortcode ===
 Contributors: David Brabbins and CTLT
 Tags: isotope, wp-query, loop, filter
 Requires at least: 3.5

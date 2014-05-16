@@ -3,7 +3,7 @@
 * Plugin Name: UBC Isotope Shortcode
 * Plugin URI: 
 * Description: UBC Isotope shortcode plugin.
-* Version: 1.0.1
+* Version: 1.0.2
 * Author: UBC CMS + David Brabbins
 * Author URI:http://cms.ubc.ca
 *
@@ -357,9 +357,6 @@ class Educ_Iso_Shortcode {
 		if( strpos( $query, 'posts_per_page=' ) === false ):
 			 $query .= "&posts_per_page=".$this->iso_attributes['num'];
 		endif;
-		if( strpos( $query, 'category_name=' ) === false ):
-			 $query .= "&category_name=".$this->iso_attributes['category'];
-		endif;
 		if( $this->iso_attributes['pagination'] ):
 			$query .= "&paged=".get_query_var( 'paged' );
 		endif;
@@ -464,17 +461,30 @@ class Educ_Iso_Shortcode {
 					
 			case "tags":
 			case "tag":
+				if (isset($this->iso_query->query[ 'tag' ])) :
 					 $get_arr_tags = ( explode( ',', $this->iso_query->get( 'tag' ) ) );
+				else: echo "<div class=\"iso-no-taxonomy alert alert-error\"><i class=\"icon-exclamation\"></i> Oops, there is nothing to filter by. Currently, Iso Shortcode is try to filter_by tag. Please use the tag in the query.</div>";
+				endif;
 			break;
 					
 			case "category":
 			case "categories":
 			case "cat":
+
+				if (isset($this->iso_query->query[ 'category_name' ])) :
 					 $get_arr_tags = ( explode( ',', $this->iso_query->query[ 'category_name' ] ) );
+				elseif (isset($this->iso_query->query[ 'category' ])) :	
+					echo "<div class=\"iso-no-taxonomy alert alert-error\"><i class=\"icon-exclamation\"></i> Please use category_name and not category</div>";
+				else: echo "<div class=\"iso-no-taxonomy alert alert-error\"><i class=\"icon-exclamation\"></i> Oops, there is nothing to filter by. Currently, Iso Shortcode is try to filter_by category. Please use the category_name in the query.</div>";
+				endif;
+
 			break;
 
             case "custom_post":
-                 $get_arr_tags = ( explode( ',', $this->iso_query->get( $iso_taxonomy ) ) );
+            	if (!empty($iso_taxonomy)) :
+                	$get_arr_tags = ( explode( ',', $this->iso_query->get( $iso_taxonomy ) ) );
+				else: echo "<div class=\"iso-no-taxonomy alert alert-error\"><i class=\"icon-exclamation\"></i> Oops, there is nothing to filter by. Currently, Iso Shortcode is try to filter_by custom_post. Please use a custom taxonomy in the query.</div>";
+				endif;
             break;
 
 		}
@@ -496,11 +506,15 @@ class Educ_Iso_Shortcode {
 					<div id="menu-top-service-menu" class="iso-links">
 						<a href="#" data-filter-value="*" class="current"><i class="icon-th"></i>&nbsp; All</a>
 						<?php 
+							if (isset($get_arr_tags)) :
 							foreach ($get_arr_tags as $var) {
                        			$var_rep = str_replace('-', ' ', $var);
                       		 	$var_rep = ucwords(strtolower($var_rep));
 							echo '			<a href="#" data-filter-value=".'. $var .'">'. $var_rep .'</a>';
-		   				} ?>
+		   				} 
+							else: echo '<a class=\"iso-no-taxonomy\">Please set a category_name, tag, or a custom taxonomy.</a>';
+							endif;
+		   				?>
 					</div>
 				</div>	
 			</div>
@@ -516,12 +530,16 @@ class Educ_Iso_Shortcode {
 					  </button>
 					  <ul class="dropdown-menu iso-links">
 							<?php 
-
+							if (isset($get_arr_tags)) :
 											
-						   foreach ($get_arr_tags as $var) {
+							   foreach ($get_arr_tags as $var) {
 							   $var_rep = str_replace('-', ' ', $var);
 								echo '	<li><a class="'. $var .'" data-filter-value=".'. $var .'">'. $var_rep .'</a></li>';
-							} ?>
+								}
+							else: echo '<li><a class=\"iso-no-taxonomy\" >Please set a category_name or tag</a></li>';
+
+							endif;
+							 ?>
 					  </ul>
 			</div>
 
@@ -834,6 +852,7 @@ class Educ_Iso_Shortcode {
 		 
 		$post_tax_header = get_the_terms( $post->ID, $iso_taxonomies);
 			$output_tax_header = ' ';
+			$the_tax_links ='';
 			if($post_tax_header){
 				foreach($post_tax_header as $tax_head) {
 					$output_tax_header .= $tax_head->name;
@@ -1137,6 +1156,7 @@ class Educ_Iso_Shortcode {
 
 
 				$post_tax_header = get_the_terms( $post->ID, 'taxonomy');
+					$the_tax_links ='';
 					$output_tax_header = ' ';
 					if($post_tax_header){
 						foreach($post_tax_header as $tax_head) {

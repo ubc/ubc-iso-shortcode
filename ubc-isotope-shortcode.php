@@ -401,6 +401,15 @@ class Educ_Iso_Shortcode {
 								),
 							);
 		endif;
+
+		// Attempt to stop recursion by never allowing a post to call itself.
+		global $post;
+		$mainPostID = $post->ID;
+
+		$query_array['post__not_in'] = array( $mainPostID );
+
+		// Now, as a way to be able to edit the query arguments externally, let's run the array through a filter
+		$query_args = apply_filters( 'ubc_iso_shortcode_query_args', $query_args, $query, $mainPostID );
 		
 		$this->iso_query = new WP_Query( $query_array );
 		

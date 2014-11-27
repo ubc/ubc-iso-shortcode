@@ -200,21 +200,26 @@ class Educ_Iso_Shortcode {
 	 */
 	function get_plain_terms_slug_shortcode() {
 
-	  $post = get_post( $post->ID );
-	  $post_type = $post->post_type;
-	  $taxonomies = get_object_taxonomies( $post_type, 'objects' );
+	 if (isset($post)) {
+		  $post = get_post( $post->ID );
+		  $post_type = $post->post_type;
+		  $taxonomies = get_object_taxonomies( $post_type, 'objects' );
 
-	  $outterm = "";
-	  foreach ( $taxonomies as $taxonomy_slug => $taxonomy ){
+		  $outterm = "";
+		  foreach ( $taxonomies as $taxonomy_slug => $taxonomy ){
 
-	    $terms = get_the_terms( $post->ID, $taxonomy_slug );
-	    if ( !empty( $terms ) ) :
-	      foreach ( $terms as $term ) {
-	        $outterm .= $term->slug.' ';
-	      }
-	      endif;
-	  }
-	  return $outterm;
+		    $terms = get_the_terms( $post->ID, $taxonomy_slug );
+		    if ( !empty( $terms ) ) :
+		      foreach ( $terms as $term ) {
+		        $outterm .= $term->slug.' ';
+		      }
+		      endif;
+		  }
+		  return $outterm;
+
+	}
+
+	  return;
 	}
 
 	/**
@@ -409,7 +414,9 @@ class Educ_Iso_Shortcode {
 		$query_array['post__not_in'] = array( $mainPostID );
 
 		// Now, as a way to be able to edit the query arguments externally, let's run the array through a filter
+		$query_args = '';
 		$query_args = apply_filters( 'ubc_iso_shortcode_query_args', $query_args, $query, $mainPostID );
+
 		
 		$this->iso_query = new WP_Query( $query_array );
 		

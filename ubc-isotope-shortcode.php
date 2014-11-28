@@ -3,7 +3,7 @@
 * Plugin Name: UBC Isotope Shortcode
 * Plugin URI: 
 * Description: UBC Isotope shortcode plugin.
-* Version: 1.0.2
+* Version: 1.0.3
 * Author: UBC CMS + David Brabbins
 * Author URI:http://cms.ubc.ca
 *
@@ -198,14 +198,15 @@ class Educ_Iso_Shortcode {
 	 * @access public
 	 * @return void
 	 */
-	function get_plain_terms_slug_shortcode() {
 
-	 if (isset($post)) {
-		  $post = get_post( $post->ID );
+	function get_plain_terms_slug_shortcode() {
+		  global $post;
+
 		  $post_type = $post->post_type;
 		  $taxonomies = get_object_taxonomies( $post_type, 'objects' );
 
 		  $outterm = "";
+		  
 		  foreach ( $taxonomies as $taxonomy_slug => $taxonomy ){
 
 		    $terms = get_the_terms( $post->ID, $taxonomy_slug );
@@ -216,11 +217,9 @@ class Educ_Iso_Shortcode {
 		      endif;
 		  }
 		  return $outterm;
-
 	}
 
-	  return;
-	}
+
 
 	/**
 	 * get_category_name_shortcode function.
